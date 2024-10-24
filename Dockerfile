@@ -8,4 +8,4 @@ MAINTAINER "Pranay <pranay.shah@harness.io>"
 
 
 # Copy to images tomcat path
-COPY target/todolist.war /usr/local/tomcat/webapps/ROOT.war
+COPY /harness/todolist-demo/target/todolist.war /usr/local/tomcat/webapps/ROOT.war
