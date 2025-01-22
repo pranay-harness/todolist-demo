@@ -1,8 +1,8 @@
 apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 metadata:
-  name: scs-idp
-  title: Onboard repos for Supply Chain Security
+  name: scs-rspm
+  title: Onboard github repos for SCS RSPM
   description: A workflow to onboard github repos for automated scanning
   tags:
     - scs
