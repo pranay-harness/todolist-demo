@@ -16,7 +16,7 @@ const security = require('../lib/insecurity')
 const challenges = require('../data/datacache').challenges
 const users = require('../data/datacache').users
 
-// vuln-code-snippet start loginAdminChallenge loginBenderChallenge loginJimChallenge
+// vuln-code-snippet start loginAdminChallenge loginBenderChallenge loginJimChallenges
 module.exports = function login () {
   function afterLogin (user: { data: User, bid: number }, res: Response, next: NextFunction) {
     verifyPostLoginChallenges(user) // vuln-code-snippet hide-line
