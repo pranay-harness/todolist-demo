@@ -55,9 +55,9 @@
       <version>3.2.18.RELEASE</version> <!-- EOL -->
     </dependency>
     <dependency>
-      <groupId>struts</groupId>
-      <artifactId>struts</artifactId>
-      <version>1.3.10</version> <!-- EOL -->
+      <groupId>org.apache.struts</groupId>
+      <artifactId>struts-core</artifactId>
+      <version>1.3.10</version>
     </dependency>
     <dependency>
       <groupId>org.apache.shiro</groupId>
