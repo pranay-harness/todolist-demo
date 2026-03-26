@@ -6,3 +6,4 @@ Basic `todolist` app.
 5. This is a test repository.
 6. Supports in-memory H2 database with no external setup required.
 7. Uses JSP pages with Bootstrap CSS for a responsive frontend interface.
+8. Authentication is handled via servlet filters with session-based user tracking.
