@@ -8,3 +8,4 @@ Basic `todolist` app.
 7. Uses JSP pages with Bootstrap CSS for a responsive frontend interface.
 8. Authentication is handled via servlet filters with session-based user tracking.
 9. Configured with Maven Compiler Plugin targeting Java 1.6 source compatibility.
+10. A Java servlet-based todolist web application that runs on Tomcat with an embedded H2 database.
