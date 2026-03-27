@@ -17,7 +17,6 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           openai_api_key: ${{ secrets.OPENAI_API_KEY }}
           rubric: soc2
-          risk_threshold: L3
 
       - uses: actions/upload-artifact@v4
         if: always()
