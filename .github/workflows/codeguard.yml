@@ -15,7 +15,7 @@ jobs:
         id: guard
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          open_api_key: ${{ secrets.OPENAI_API_KEY }}
+          openai_api_key: ${{ secrets.OPENAI_API_KEY }}
           rubric: soc2
           risk_threshold: L3
 
