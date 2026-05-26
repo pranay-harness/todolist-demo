@@ -4,3 +4,4 @@ Basic `todolist` app.
 3. Run docker a: `docker run -p 8080:8080 <image_id>`
 4. Simple change for test.
 5. Another trivial update.
+6. Yet another trivial update.
