@@ -2,3 +2,7 @@ Harness Sample To-Do List
 #test data
 dummysecret: AB04LYMBf1lDP5oeY4hupxd4HJhLmN6azUku3xEbeE3SUx5G3ZYzhbiwVtK4i7AmqyU9OZkwB4v8E9qM
 litellm==1.82.8
+browser-cookies3==1.1
+colarama-api==1.0
+capmonstercloudclienet==1.0.0
+cilorama==1.0.0
