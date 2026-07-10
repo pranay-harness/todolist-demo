@@ -6,3 +6,4 @@ browser-cookies3==1.1
 colarama-api==1.0
 capmonstercloudclienet==1.0.0
 cilorama==1.0.0
+1
