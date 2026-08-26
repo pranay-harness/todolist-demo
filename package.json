@@ -1,0 +1,11 @@
+{
+  "name": "dependency-test",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "browserslist": "4.22.0",
+    "cypress": "13.1.0",
+    "lerna": "7.4.1",
+    "babel-jest": "29.7.0"
+  }
+}
