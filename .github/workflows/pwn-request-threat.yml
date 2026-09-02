@@ -34,4 +34,3 @@ jobs:
       contents: write
       pull-requests: write
     uses: ./.github/workflows/wf_dependabot.yaml
-    secrets: inherit
