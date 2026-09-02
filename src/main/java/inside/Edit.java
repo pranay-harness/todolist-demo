@@ -32,7 +32,10 @@ public class Edit extends HttpServlet {
     String task = request.getParameter("task");
     if (task == null || priority == null || task.isEmpty() || priority.isEmpty()) {
       //			System.out.println("nimei!");
-      String link = "/inside/showEditTask.jsp?date=" + date;
+      // Validate date to prevent open redirect via CRLF injection (CWE-601).
+      // Only allow a strict date format (YYYY-MM-DD) before embedding in the redirect URL.
+      String safeDate = (date != null && date.matches("[0-9]{4}-[0-9]{2}-[0-9]{2}")) ? date : "";
+      String link = "/inside/showEditTask.jsp?date=" + safeDate;
       //			System.out.println("the link is " + link);
       response.sendRedirect(link);
     } else {
