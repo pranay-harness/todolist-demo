@@ -27,9 +27,10 @@ jobs:
         ${GITHUB_WORKSPACE}/sl --version
         ${GITHUB_WORKSPACE}/sl analyze --strict --wait \
           --app todolist-demo \
-          --tag branch=${{ github.head_ref }} \
+          --tag branch=$HEAD_REF \
           --javasrc $(pwd)
       env:
+        HEAD_REF: ${{ github.head_ref }}
         SHIFTLEFT_ACCESS_TOKEN: ${{ secrets.SHIFTLEFT_ACCESS_TOKEN }}
         SHIFTLEFT_API_HOST: www.shiftleft.io
         SHIFTLEFT_GRPC_TELEMETRY_HOST: telemetry.shiftleft.io:443
