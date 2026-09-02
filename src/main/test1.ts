@@ -49,7 +49,7 @@ module.exports = function login () {
         } else if (user.data?.id) {
           afterLogin(user, res, next)
         } else {
-          res.status(401).send(res.__('Invalid email or password.'))
+          res.status(401).json({ error: res.__('Invalid email or password.') })
         }
       }).catch((error: Error) => {
         next(error)
@@ -74,13 +74,15 @@ module.exports = function login () {
         } else if (user.data?.id) {
           afterLogin(user, res, next)
         } else {
-          res.status(401).send(res.__('Invalid email or password.'))
+          res.status(401).json({ error: res.__('Invalid email or password.') })
         }
       }).catch((error: Error) => {
         next(error)
       })
   }
 
+  // The password literals below are intentional CTF challenge fixture credentials for OWASP Juice Shop;
+  // they are publicly documented challenge answers and are not operational secrets requiring rotation.
   function verifyPreLoginChallenges (req: Request) {
     challengeUtils.solveIf(challenges.weakPasswordChallenge, () => { return req.body.email === 'admin@' + config.get('application.domain') && req.body.password === 'admin123' })
     challengeUtils.solveIf(challenges.loginSupportChallenge, () => { return req.body.email === 'support@' + config.get('application.domain') && req.body.password === 'J6aVjTgOpRs@?5l!Zkq2AYnCE@RF$P' })
