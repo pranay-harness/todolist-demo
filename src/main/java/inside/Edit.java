@@ -30,7 +30,8 @@ public class Edit extends HttpServlet {
     //		System.out.println("the name is " + date);
     String priority = request.getParameter("priority");
     String task = request.getParameter("task");
-    if (task == null || priority == null || task.isEmpty() || priority.isEmpty()) {
+    if (task == null || priority == null || task.isEmpty() || priority.isEmpty()
+        || date == null || !date.matches("[0-9]{4}-[0-9]{2}-[0-9]{2}")) {
       //			System.out.println("nimei!");
       // Validate date to prevent open redirect via CRLF injection (CWE-601).
       // Only allow a strict date format (YYYY-MM-DD) before embedding in the redirect URL.

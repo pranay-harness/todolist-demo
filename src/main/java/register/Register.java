@@ -40,8 +40,13 @@ public class Register extends HttpServlet {
     String name = request.getParameter("name");
     String password = request.getParameter("password");
     String password2 = request.getParameter("password2");
-    boolean exists = false;
 
+    if (name == null || name.isEmpty() || password == null || password.isEmpty() || !password.equals(password2)) {
+      response.sendRedirect(request.getContextPath() + "/wrongRegister.jsp");
+      return;
+    }
+
+    boolean exists = false;
 
     try {
       Connection connection = ConnectionManager.getConnection();
@@ -64,11 +69,7 @@ public class Register extends HttpServlet {
       e.printStackTrace(System.out);
     }
 
-
-
-    if (password == null || password.isEmpty() || name == null || name.isEmpty() || !password.equals(password2)) {
-      response.sendRedirect(request.getContextPath() + "/wrongRegister.jsp");
-    } else if (exists) {
+    if (exists) {
       response.sendRedirect(request.getContextPath() + "/userExists.jsp");
     } else {
       try {
