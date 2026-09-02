@@ -49,10 +49,6 @@ public class Edit extends HttpServlet {
         statement.setString(2, priority);
         statement.setString(3, date);
         statement.setString(4, name);
-        System.out.println("task is " + task);
-        System.out.println("p is " + priority);
-        System.out.println("time is " + date);
-        System.out.println("name is " + name);
         statement.executeUpdate();
         statement.close();
         response.sendRedirect("/inside/display");
