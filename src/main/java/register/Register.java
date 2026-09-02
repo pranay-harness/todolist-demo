@@ -46,14 +46,14 @@ public class Register extends HttpServlet {
     try {
       Connection connection = ConnectionManager.getConnection();
 
-      Statement statement = connection.createStatement();
+      PreparedStatement statement = connection.prepareStatement(
+          "select name from accounts where name = ?");
+      statement.setString(1, name);
 
+      ResultSet resultSet = statement.executeQuery();
 
-      ResultSet resultSet = statement.executeQuery("select name from accounts");
-
-      while (resultSet.next()) {
-        if (resultSet.getString(1).equals(name))
-          exists = true;
+      if (resultSet.next()) {
+        exists = true;
       }
       resultSet.close();
       statement.close();
