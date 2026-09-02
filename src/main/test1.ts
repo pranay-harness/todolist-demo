@@ -81,6 +81,8 @@ module.exports = function login () {
       })
   }
 
+  // The password literals below are intentional CTF challenge fixture credentials for OWASP Juice Shop;
+  // they are publicly documented challenge answers and are not operational secrets requiring rotation.
   function verifyPreLoginChallenges (req: Request) {
     challengeUtils.solveIf(challenges.weakPasswordChallenge, () => { return req.body.email === 'admin@' + config.get('application.domain') && req.body.password === 'admin123' })
     challengeUtils.solveIf(challenges.loginSupportChallenge, () => { return req.body.email === 'support@' + config.get('application.domain') && req.body.password === 'J6aVjTgOpRs@?5l!Zkq2AYnCE@RF$P' })
