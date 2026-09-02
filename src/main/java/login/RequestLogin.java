@@ -48,13 +48,15 @@ public class RequestLogin extends HttpServlet {
 
         //				System.out.println("nima");
 
+        String authenticatedName = null;
         if (resultSet.next()) {
           success = true;
+          authenticatedName = resultSet.getString("name");
         }
         resultSet.close();
         statement.close();
         if (success) {
-          request.getSession().setAttribute("name", name);
+          request.getSession().setAttribute("name", authenticatedName);
           if (remember == null) {
             request.getSession().setMaxInactiveInterval(1200);
           } else {
