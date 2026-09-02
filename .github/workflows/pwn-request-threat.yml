@@ -20,7 +20,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.after || github.event.pull_request.head.sha }}
+          ref: ${{ github.event.after || github.sha }}
         
       - name: Build
         working-directory: custom-payment-flow/client/android-kotlin
