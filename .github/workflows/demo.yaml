@@ -6,11 +6,11 @@ jobs:
     name: Build and test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@0717577d45739eb3c851188b29f50ed6c0b2194e # v2
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
-      - uses: actions/setup-node@master
+      - uses: actions/setup-node@60c11408891ef62846c29c28c2374afe5c91fad5 # master
       - run: |
           npm install
           npm build
@@ -25,20 +25,6 @@ jobs:
 
       - uses: docker://alpine@sha256:402d21757a03a114d273bbe372fa4b9eca567e8b6c332fa7ebf982b902207242
 
-      - uses: completely/fakeaction@5fd3084
-        with:
-          arg2: ${{ secrets.supersecret2 }}
- 
-      - uses: fakerepo/comment-on-pr@v1
-        with:
-          message: |
-            Thank you!
- 
-      - uses: fakerepo/comment-on-pr
-        with:
-          message: |
-            Thank you!
-      
       # curl with --insecure flag
       - name: curl with --insecure flag
         run: curl --insecure http://www.example.com/
@@ -75,7 +61,7 @@ jobs:
       - uses: docker://alpine:3.8
 
       - name: Upload SARIF file for GitHub Advanced Security Dashboard
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@b8d3b6e8af63cde30bdc382c0bc28114f4346c88 # v2
         with:
           sarif_file: semgrep.sarif
         if: always()
@@ -91,7 +77,7 @@ jobs:
     env:
       workdir: lambdas/run-semgrep
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@0717577d45739eb3c851188b29f50ed6c0b2194e # v2
       - name: Build Docker image
         working-directory:
           ${{ env.workdir }}/src
