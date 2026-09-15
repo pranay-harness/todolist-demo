@@ -1,3 +1,8 @@
 Harness Sample To-Do List
 #test data
-dummysecret: AB04LYMBf1lDP5oeY4hupxd4HJhLmN6azUku3xEbeE3SUx5G3ZYzhbiwVtK4i7AmqyU9OZkwB4v8E9qM
+# Removed hard-coded credential that was stored here as `dummysecret`.
+# No code in this repository reads this file; nothing needs to be re-wired.
+# If a secret value is ever required, read it at runtime from an environment
+# variable or the configured secrets manager - never commit a literal here.
+# ACTION REQUIRED: rotate (revoke and reissue) the credential that was
+# previously committed on this line - it is still recoverable from git history.
