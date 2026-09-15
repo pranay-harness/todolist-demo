@@ -46,15 +46,16 @@ public class Register extends HttpServlet {
     try {
       Connection connection = ConnectionManager.getConnection();
 
-      Statement statement = connection.createStatement();
+      // The account name is bound as a parameter so it can never become part of the SQL text.
+      String queryString = "select name from accounts where name = ?";
+      PreparedStatement statement = connection.prepareStatement(queryString);
+      statement.setString(1, name);
 
+      ResultSet resultSet = statement.executeQuery();
 
-      ResultSet resultSet = statement.executeQuery("select name from accounts");
+      if (resultSet.next())
+        exists = true;
 
-      while (resultSet.next()) {
-        if (resultSet.getString(1).equals(name))
-          exists = true;
-      }
       resultSet.close();
       statement.close();
     } catch (SQLException e) {
