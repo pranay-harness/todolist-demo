@@ -34,4 +34,7 @@ jobs:
       contents: write
       pull-requests: write
     uses: ./.github/workflows/wf_dependabot.yaml
-    secrets: inherit
+    # Least privilege: do not inherit all caller/org secrets. The called
+    # workflow declares no `workflow_call.secrets`, and GITHUB_TOKEN is
+    # provided automatically (see the `permissions` block above). Pass any
+    # future requirement explicitly, e.g. `secrets: {NAME: ${{ secrets.NAME }}}`.

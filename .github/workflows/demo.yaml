@@ -84,7 +84,10 @@ jobs:
   build2:
     name: Build and test using a local workflow
     uses: ./.github/workflows/use_a_local_workflow.yml@master
-    secrets: inherit
+    # Least privilege: do not inherit all caller/org secrets. The called
+    # workflow declares no `workflow_call.secrets` and only takes `examplearg`.
+    # Pass any future requirement explicitly by name, e.g.
+    # `secrets: {NAME: ${{ secrets.NAME }}}`.
     with:
       examplearg: true
   
