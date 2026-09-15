@@ -49,7 +49,9 @@ module.exports = function login () {
         } else if (user.data?.id) {
           afterLogin(user, res, next)
         } else {
-          res.status(401).send(res.__('Invalid email or password.'))
+          // Send the (non-constant) localized message as plain text, never as HTML,
+          // so markup in the resolved translation cannot be executed by the browser.
+          res.status(401).type('text/plain').set('X-Content-Type-Options', 'nosniff').send(res.__('Invalid email or password.'))
         }
       }).catch((error: Error) => {
         next(error)
@@ -74,7 +76,9 @@ module.exports = function login () {
         } else if (user.data?.id) {
           afterLogin(user, res, next)
         } else {
-          res.status(401).send(res.__('Invalid email or password.'))
+          // Send the (non-constant) localized message as plain text, never as HTML,
+          // so markup in the resolved translation cannot be executed by the browser.
+          res.status(401).type('text/plain').set('X-Content-Type-Options', 'nosniff').send(res.__('Invalid email or password.'))
         }
       }).catch((error: Error) => {
         next(error)
