@@ -1,13 +1,13 @@
 package inside;
 
 import db.ConnectionManager;
+import validation.RequestValidator;
 
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.regex.Pattern;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -26,27 +26,6 @@ public class Edit extends HttpServlet {
   private static final String DISPLAY_PAGE = "/inside/display";
 
   /**
-   * Task create dates are generated server-side from Date#toString() with blanks replaced by
-   * underscores (e.g. "Mon_Sep_15_12:34:56_UTC_2026"), so only these characters are accepted.
-   * Anything else (path separators, scheme/host characters, encoded escapes) is rejected.
-   */
-  private static final Pattern SAFE_DATE = Pattern.compile("[A-Za-z0-9 _:+-]{1,64}");
-
-  /**
-   * Priority is stored in an integer column, and the edit form offers 1-10 (see
-   * inside/showEditTask.jsp). Accept the same positive-integer shape AddTask accepts, bounded so the
-   * value always fits the column.
-   */
-  private static final Pattern SAFE_PRIORITY = Pattern.compile("[1-9][0-9]{0,8}");
-
-  /**
-   * Task text is free form but is stored in {@code task.thing varchar(60)}. Control characters
-   * (CR/LF, NUL, ...) are rejected so request data can never forge log records or break the stored
-   * value.
-   */
-  private static final Pattern SAFE_TASK = Pattern.compile("[^\\p{Cntrl}]{1,60}");
-
-  /**
    * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
    */
   protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -62,16 +41,18 @@ public class Edit extends HttpServlet {
       // The destination is a fixed in-application page; the request value is only ever carried
       // as an allowlisted, URL-encoded query parameter so it cannot alter scheme, host or path.
       String link = DISPLAY_PAGE;
-      if (date != null && SAFE_DATE.matcher(date).matches()) {
+      if (RequestValidator.isCreateDate(date)) {
         link = EDIT_TASK_PAGE + "?date=" + URLEncoder.encode(date, "UTF-8");
       }
       //			System.out.println("the link is " + link);
       response.sendRedirect(link);
-    } else if (!SAFE_TASK.matcher(task).matches()
-        || !SAFE_PRIORITY.matcher(priority).matches()
-        || date == null
-        || !SAFE_DATE.matcher(date).matches()) {
-      // Fail closed: unvalidated request data never reaches the update logic. Redirect back to the
+    } else if (!RequestValidator.isTaskText(task)
+        || !RequestValidator.isPriority(priority)
+        || !RequestValidator.isCreateDate(date)) {
+      // Fail closed: unvalidated request data never reaches the update logic. The allowlists live in
+      // validation.RequestValidator - the single definition every servlet uses - so the task text,
+      // priority and create date are validated here exactly as AddTask and Delete validate them,
+      // including the stored width of the columns they are written to. Redirect back to the
       // in-application list page, the same way the rest of the app handles rejected input.
       response.sendRedirect(DISPLAY_PAGE);
     } else {
