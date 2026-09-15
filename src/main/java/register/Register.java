@@ -46,17 +46,18 @@ public class Register extends HttpServlet {
     try {
       Connection connection = ConnectionManager.getConnection();
 
-      Statement statement = connection.createStatement();
+      // The "is this name already taken" check binds the submitted name as a parameter so it is
+      // never concatenated into the SQL text, and the database filters the row server-side.
+      try (PreparedStatement statement = connection.prepareStatement("select name from accounts where name = ?")) {
+        statement.setString(1, name);
 
-
-      ResultSet resultSet = statement.executeQuery("select name from accounts");
-
-      while (resultSet.next()) {
-        if (resultSet.getString(1).equals(name))
-          exists = true;
+        try (ResultSet resultSet = statement.executeQuery()) {
+          while (resultSet.next()) {
+            if (resultSet.getString(1).equals(name))
+              exists = true;
+          }
+        }
       }
-      resultSet.close();
-      statement.close();
     } catch (SQLException e) {
       e.printStackTrace(System.out);
     } catch (Exception e) {
