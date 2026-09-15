@@ -1,5 +1,7 @@
 on:
-  pull_request_target:
+  # The build job checks out and executes untrusted PR code (npm install/build),
+  # so it must run only in the `pull_request` context (read-only token, no repo
+  # secrets). `pull_request_target` would hand those secrets to fork code.
   pull_request:
 
 jobs:

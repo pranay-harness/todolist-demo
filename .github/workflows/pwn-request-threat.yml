@@ -5,7 +5,10 @@ on:
       - main
       - fix-ci
   workflow_dispatch:
-  pull_request_target:
+  # Untrusted PR code is checked out and built (./gradlew build) below, so this
+  # must run in the `pull_request` context (read-only token, no repo secrets)
+  # instead of `pull_request_target`, which would expose secrets to fork code.
+  pull_request:
     branches:
       - main
     paths:
