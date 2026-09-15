@@ -49,7 +49,8 @@ module.exports = function login () {
         } else if (user.data?.id) {
           afterLogin(user, res, next)
         } else {
-          res.status(401).send(res.__('Invalid email or password.'))
+          // send as plain text so the non-constant (i18n) message is never interpreted as HTML
+          res.status(401).type('text/plain').send(res.__('Invalid email or password.'))
         }
       }).catch((error: Error) => {
         next(error)
@@ -74,7 +75,8 @@ module.exports = function login () {
         } else if (user.data?.id) {
           afterLogin(user, res, next)
         } else {
-          res.status(401).send(res.__('Invalid email or password.'))
+          // send as plain text so the non-constant (i18n) message is never interpreted as HTML
+          res.status(401).type('text/plain').send(res.__('Invalid email or password.'))
         }
       }).catch((error: Error) => {
         next(error)
