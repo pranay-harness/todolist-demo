@@ -1,6 +1,7 @@
 package inside;
 
 import db.ConnectionManager;
+import validation.RequestParameters;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -8,7 +9,6 @@ import java.net.URLEncoder;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.regex.Pattern;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -29,41 +29,13 @@ public class Edit extends HttpServlet {
   private static final String DEFAULT_REDIRECT_PATH = "/inside/display";
 
   /**
-   * Shape of a task createDate: AddTask stores Date.toString() with spaces replaced by '_'
-   * (e.g. Mon_Sep_15_12:00:00_UTC_2026). Anything else is rejected.
-   */
-  private static final Pattern SAFE_DATE = Pattern.compile("[A-Za-z0-9_:.+-]{1,64}");
-
-  /**
-   * Shape of a task priority: AddTask only ever stores a positive integer without leading zeros
-   * (see the "Priority(1-10)" inputs in the JSPs), so the same shape is accepted here. The length
-   * bound keeps the value inside the range of the integer priority column.
-   */
-  private static final Pattern SAFE_PRIORITY = Pattern.compile("[1-9][0-9]{0,8}");
-
-  /**
-   * Shape of a task description: the thing column is varchar(60), and control characters
-   * (CR/LF/NUL) are rejected so an untrusted value can never forge extra log records.
-   */
-  private static final Pattern SAFE_TASK = Pattern.compile("[^\\p{Cntrl}]{1,60}");
-
-  /**
-   * Validates an untrusted request parameter at the trust boundary: a missing value, or a value
-   * that does not match the expected shape, is rejected so it never reaches the database, the
-   * redirect target or the application log.
-   */
-  private static boolean isValidParameter(String value, Pattern shape) {
-    return value != null && shape.matcher(value).matches();
-  }
-
-  /**
    * Builds the redirect target for the edit form. The path is always a compile-time constant
    * in-application path, and the untrusted date value is only appended when it matches the
    * expected createDate shape and after URL encoding. Absolute URLs, protocol-relative
    * targets, backslash tricks and encoded variants can therefore never reach sendRedirect.
    */
   private static String buildEditTaskRedirect(String dateParam) {
-    if (dateParam == null || !SAFE_DATE.matcher(dateParam).matches()) {
+    if (!RequestParameters.isValidDate(dateParam)) {
       return DEFAULT_REDIRECT_PATH;
     }
     try {
@@ -86,9 +58,9 @@ public class Edit extends HttpServlet {
     String task = request.getParameter("task");
     // Validate every untrusted parameter before it is used; invalid input falls back to the edit
     // form exactly as a missing task or priority already did.
-    if (!isValidParameter(task, SAFE_TASK)
-        || !isValidParameter(priority, SAFE_PRIORITY)
-        || !isValidParameter(date, SAFE_DATE)) {
+    if (!RequestParameters.isValidTask(task)
+        || !RequestParameters.isValidPriority(priority)
+        || !RequestParameters.isValidDate(date)) {
       //			System.out.println("nimei!");
       String link = buildEditTaskRedirect(date);
       //			System.out.println("the link is " + link);

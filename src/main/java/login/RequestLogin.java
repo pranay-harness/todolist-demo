@@ -1,6 +1,7 @@
 package login;
 
 import db.ConnectionManager;
+import validation.RequestParameters;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -28,7 +29,12 @@ public class RequestLogin extends HttpServlet {
     String password = request.getParameter("password");
     String remember = request.getParameter("remember");
     boolean success = false;
-    if (password == null || password.isEmpty() || name == null || name.isEmpty()) {
+    // Validate every untrusted parameter at the trust boundary before it reaches the database;
+    // anything that does not have the expected shape fails closed to the login fault page, exactly
+    // as a missing name or password already did.
+    if (!RequestParameters.isValidName(name)
+        || !RequestParameters.isValidPassword(password)
+        || !RequestParameters.isAbsentOrValidFlag(remember)) {
       response.sendRedirect(request.getContextPath() + "/loginFault.jsp");
     } else {
       try {

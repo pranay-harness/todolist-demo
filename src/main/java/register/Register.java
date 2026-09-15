@@ -1,6 +1,7 @@
 package register;
 
 import db.ConnectionManager;
+import validation.RequestParameters;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -40,6 +41,17 @@ public class Register extends HttpServlet {
     String name = request.getParameter("name");
     String password = request.getParameter("password");
     String password2 = request.getParameter("password2");
+
+    // Validate every untrusted parameter at the trust boundary, before any of them reaches the
+    // database. Values that do not have the expected shape (or that would not fit the accounts
+    // columns) fail closed to the same page a missing name or password already used.
+    if (!RequestParameters.isValidName(name)
+        || !RequestParameters.isValidPassword(password)
+        || !RequestParameters.isValidPassword(password2)) {
+      response.sendRedirect(request.getContextPath() + "/wrongRegister.jsp");
+      return;
+    }
+
     boolean exists = false;
 
 
@@ -66,7 +78,7 @@ public class Register extends HttpServlet {
 
 
 
-    if (password == null || password.isEmpty() || name == null || name.isEmpty() || !password.equals(password2)) {
+    if (!password.equals(password2)) {
       response.sendRedirect(request.getContextPath() + "/wrongRegister.jsp");
     } else if (exists) {
       response.sendRedirect(request.getContextPath() + "/userExists.jsp");
