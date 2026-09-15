@@ -12,6 +12,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import util.SafeRedirect;
 
 
 /**
@@ -67,9 +68,9 @@ public class Register extends HttpServlet {
 
 
     if (password == null || password.isEmpty() || name == null || name.isEmpty() || !password.equals(password2)) {
-      response.sendRedirect(request.getContextPath() + "/wrongRegister.jsp");
+      SafeRedirect.to(getServletContext(), response, SafeRedirect.WRONG_REGISTER_PAGE);
     } else if (exists) {
-      response.sendRedirect(request.getContextPath() + "/userExists.jsp");
+      SafeRedirect.to(getServletContext(), response, SafeRedirect.USER_EXISTS_PAGE);
     } else {
       try {
         Connection connection = ConnectionManager.getConnection();
@@ -87,7 +88,7 @@ public class Register extends HttpServlet {
         System.err.println("ERROR: failed to load HSQLDB JDBC driver.FUCK!");
         e.printStackTrace(System.out);
       }
-      response.sendRedirect(request.getContextPath() + "/login.jsp");
+      SafeRedirect.to(getServletContext(), response, SafeRedirect.LOGIN_PAGE);
     }
   }
 }
