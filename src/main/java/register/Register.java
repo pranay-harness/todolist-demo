@@ -24,14 +24,23 @@ import javax.servlet.http.HttpServletResponse;
 
 
 public class Register extends HttpServlet {
+
+  // The schema statements below are fixed, self-contained SQL constants. They are never assembled
+  // at runtime and no request-supplied value is ever concatenated into them, so the SQL text these
+  // statements execute cannot be influenced from outside the application.
+  private static final String CREATE_ACCOUNTS_TABLE =
+      "create table accounts (name varchar(32), password varchar(255))";
+
+  private static final String CREATE_TASK_TABLE =
+      "create table task (name varchar(32), thing varchar(60), priority integer, createDate varchar(80),primary key (createDate))";
+
   @Override
   public void init() throws ServletException {
     try {
       Connection connection = ConnectionManager.getConnection();
       Statement statement = connection.createStatement();
-      statement.executeUpdate("create table accounts (name varchar(32)," + " password varchar(255))");
-      statement
-          .executeUpdate("create table task (name varchar(32)," + " thing varchar(60), priority integer, createDate varchar(80),primary key (createDate))");
+      statement.executeUpdate(CREATE_ACCOUNTS_TABLE);
+      statement.executeUpdate(CREATE_TASK_TABLE);
       statement.close();
     } catch (SQLException e) {
       e.printStackTrace(System.out);
