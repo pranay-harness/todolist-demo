@@ -1,3 +1,7 @@
 Harness Sample To-Do List
 #test data
-dummysecret: AB04LYMBf1lDP5oeY4hupxd4HJhLmN6azUku3xEbeE3SUx5G3ZYzhbiwVtK4i7AmqyU9OZkwB4v8E9qM
+# Do not commit credentials here. Supply secrets at runtime from the
+# environment or a secrets manager, e.g. read the DUMMYSECRET env var.
+# If this placeholder ever held a real credential, rotate it: the old
+# value remains recoverable from git history.
+dummysecret: ${DUMMYSECRET}
