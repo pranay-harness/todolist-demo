@@ -21,16 +21,29 @@ import javax.servlet.http.HttpServletResponse;
 
 
 public class Register extends HttpServlet {
+
+  /**
+   * Schema bootstrap DDL. These are complete, immutable compile-time constants: the statement text
+   * is never assembled from anything at runtime, so no caller-supplied value can alter the command
+   * that is sent to the database. DDL cannot bind identifiers or type definitions as
+   * {@link PreparedStatement} parameters, so the safe form here is fixed SQL rather than a
+   * parameterized query.
+   */
+  private static final String CREATE_ACCOUNTS_TABLE =
+      "create table accounts (name varchar(32), password varchar(32))";
+  private static final String CREATE_TASK_TABLE =
+      "create table task (name varchar(32), thing varchar(60), priority integer, createDate varchar(80),primary key (createDate))";
+
   @Override
   public void init() throws ServletException {
-    try {
-      Connection connection = ConnectionManager.getConnection();
-      Statement statement = connection.createStatement();
-      statement.executeUpdate("create table accounts (name varchar(32)," + " password varchar(32))");
-      statement
-          .executeUpdate("create table task (name varchar(32)," + " thing varchar(60), priority integer, createDate varchar(80),primary key (createDate))");
-      statement.close();
+    Connection connection = ConnectionManager.getConnection();
+    // try-with-resources so the statement is released even when the database rejects the DDL.
+    try (Statement statement = connection.createStatement()) {
+      statement.executeUpdate(CREATE_ACCOUNTS_TABLE);
+      statement.executeUpdate(CREATE_TASK_TABLE);
     } catch (SQLException e) {
+      // On a warm database the tables already exist and the first create fails; that is expected
+      // and must not prevent the servlet from starting, exactly as before.
       e.printStackTrace(System.out);
     }
 
