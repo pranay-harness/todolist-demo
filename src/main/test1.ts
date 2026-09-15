@@ -49,7 +49,9 @@ module.exports = function login () {
         } else if (user.data?.id) {
           afterLogin(user, res, next)
         } else {
-          res.status(401).send(res.__('Invalid email or password.'))
+          // Return the localized failure message as JSON instead of writing it into an HTML
+          // response body, so non-constant content is never interpreted as markup (CWE-79).
+          res.status(401).set('X-Content-Type-Options', 'nosniff').json({ error: res.__('Invalid email or password.') })
         }
       }).catch((error: Error) => {
         next(error)
@@ -74,7 +76,9 @@ module.exports = function login () {
         } else if (user.data?.id) {
           afterLogin(user, res, next)
         } else {
-          res.status(401).send(res.__('Invalid email or password.'))
+          // Return the localized failure message as JSON instead of writing it into an HTML
+          // response body, so non-constant content is never interpreted as markup (CWE-79).
+          res.status(401).set('X-Content-Type-Options', 'nosniff').json({ error: res.__('Invalid email or password.') })
         }
       }).catch((error: Error) => {
         next(error)
