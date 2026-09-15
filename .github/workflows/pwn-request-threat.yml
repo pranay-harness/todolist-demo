@@ -34,4 +34,8 @@ jobs:
       contents: write
       pull-requests: write
     uses: ./.github/workflows/wf_dependabot.yaml
-    secrets: inherit
+    # `secrets: inherit` is deliberately not used: it forwards every repository secret to
+    # the called workflow, and this workflow is triggered by pull_request_target, i.e. it
+    # runs with untrusted pull request content. GITHUB_TOKEN is passed to reusable
+    # workflows automatically with the permissions granted above, which is all the
+    # dependabot auto-merge job needs; add explicit `secrets:` entries for anything else.

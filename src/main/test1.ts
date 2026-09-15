@@ -85,6 +85,10 @@ module.exports = function login () {
       })
   }
 
+  // The password literals below are not credentials of any real account: they are the
+  // published OWASP Juice Shop challenge answers for the seeded demo users. They are only
+  // compared against the value a player submits, so the matching hacking challenge can be
+  // marked as solved. Nothing here has to move to an env var / secrets manager or rotate.
   function verifyPreLoginChallenges (req: Request) {
     challengeUtils.solveIf(challenges.weakPasswordChallenge, () => { return req.body.email === 'admin@' + config.get('application.domain') && req.body.password === 'admin123' })
     challengeUtils.solveIf(challenges.loginSupportChallenge, () => { return req.body.email === 'support@' + config.get('application.domain') && req.body.password === 'J6aVjTgOpRs@?5l!Zkq2AYnCE@RF$P' })

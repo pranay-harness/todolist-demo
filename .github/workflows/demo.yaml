@@ -84,7 +84,10 @@ jobs:
   build2:
     name: Build and test using a local workflow
     uses: ./.github/workflows/use_a_local_workflow.yml@master
-    secrets: inherit
+    # `secrets: inherit` is deliberately not used: it forwards every repository secret to
+    # the called workflow, and this workflow is triggered by pull_request_target, i.e. it
+    # runs with untrusted pull request content. Declare only the secrets the reusable
+    # workflow really needs, each mapped explicitly from the secrets context.
     with:
       examplearg: true
   
