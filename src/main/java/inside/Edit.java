@@ -35,6 +35,28 @@ public class Edit extends HttpServlet {
   private static final Pattern SAFE_DATE = Pattern.compile("[A-Za-z0-9_:.+-]{1,64}");
 
   /**
+   * Shape of a task priority: AddTask only ever stores a positive integer without leading zeros
+   * (see the "Priority(1-10)" inputs in the JSPs), so the same shape is accepted here. The length
+   * bound keeps the value inside the range of the integer priority column.
+   */
+  private static final Pattern SAFE_PRIORITY = Pattern.compile("[1-9][0-9]{0,8}");
+
+  /**
+   * Shape of a task description: the thing column is varchar(60), and control characters
+   * (CR/LF/NUL) are rejected so an untrusted value can never forge extra log records.
+   */
+  private static final Pattern SAFE_TASK = Pattern.compile("[^\\p{Cntrl}]{1,60}");
+
+  /**
+   * Validates an untrusted request parameter at the trust boundary: a missing value, or a value
+   * that does not match the expected shape, is rejected so it never reaches the database, the
+   * redirect target or the application log.
+   */
+  private static boolean isValidParameter(String value, Pattern shape) {
+    return value != null && shape.matcher(value).matches();
+  }
+
+  /**
    * Builds the redirect target for the edit form. The path is always a compile-time constant
    * in-application path, and the untrusted date value is only appended when it matches the
    * expected createDate shape and after URL encoding. Absolute URLs, protocol-relative
@@ -62,7 +84,11 @@ public class Edit extends HttpServlet {
     //		System.out.println("the name is " + date);
     String priority = request.getParameter("priority");
     String task = request.getParameter("task");
-    if (task == null || priority == null || task.isEmpty() || priority.isEmpty()) {
+    // Validate every untrusted parameter before it is used; invalid input falls back to the edit
+    // form exactly as a missing task or priority already did.
+    if (!isValidParameter(task, SAFE_TASK)
+        || !isValidParameter(priority, SAFE_PRIORITY)
+        || !isValidParameter(date, SAFE_DATE)) {
       //			System.out.println("nimei!");
       String link = buildEditTaskRedirect(date);
       //			System.out.println("the link is " + link);
