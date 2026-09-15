@@ -2,6 +2,7 @@ package register;
 
 import db.ConnectionManager;
 import db.StoredPassword;
+import validation.RequestValidation;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -40,11 +41,20 @@ public class Register extends HttpServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
-    String name = request.getParameter("name");
-    String password = request.getParameter("password");
-    String password2 = request.getParameter("password2");
+    // The untrusted registration values are validated as they are read. The requested account name
+    // must have the shape the accounts.name column stores, and the password and its confirmation
+    // must both be present and of sane length (their contents are never restricted, trimmed or
+    // truncated). Anything else is null here and fails closed to the registration error page
+    // before it can reach the account lookup or the insert.
+    String name = RequestValidation.accountName(request.getParameter("name"));
+    String password = RequestValidation.password(request.getParameter("password"));
+    String password2 = RequestValidation.password(request.getParameter("password2"));
     boolean exists = false;
 
+    if (name == null || password == null || password2 == null || !confirmationMatches(password, password2)) {
+      response.sendRedirect(request.getContextPath() + "/wrongRegister.jsp");
+      return;
+    }
 
     try {
       Connection connection = ConnectionManager.getConnection();
@@ -70,10 +80,7 @@ public class Register extends HttpServlet {
 
 
 
-    if (password == null || password.isEmpty() || name == null || name.isEmpty()
-        || !confirmationMatches(password, password2)) {
-      response.sendRedirect(request.getContextPath() + "/wrongRegister.jsp");
-    } else if (exists) {
+    if (exists) {
       response.sendRedirect(request.getContextPath() + "/userExists.jsp");
     } else {
       try {

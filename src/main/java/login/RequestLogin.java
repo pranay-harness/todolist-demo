@@ -2,13 +2,13 @@ package login;
 
 import db.ConnectionManager;
 import db.StoredPassword;
+import validation.RequestValidation;
 
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.regex.Pattern;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -24,24 +24,22 @@ public class RequestLogin extends HttpServlet {
   private static final long serialVersionUID = 1L;
 
   /**
-   * The shape an account name is allowed to have. Accounts are held in a {@code varchar(32)}
-   * column, so anything longer, empty or containing characters outside this set cannot be a name
-   * this application issued and is never allowed to become session state.
-   */
-  private static final Pattern ACCOUNT_NAME = Pattern.compile("[A-Za-z0-9._@ -]{1,32}");
-
-  /**
    * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
    */
   protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-    String name = request.getParameter("name");
-    String password = request.getParameter("password");
-    String remember = request.getParameter("remember");
+    // Every untrusted parameter is validated as it is read, so no unchecked value reaches the
+    // account lookup or the session: the name must have the shape an account name is stored with,
+    // the password must be present and of sane length (its contents are never restricted or
+    // altered), and "remember me" is only honoured for the value the sign in form submits.
+    // Anything else is null/false here and the request fails closed below.
+    String name = RequestValidation.accountName(request.getParameter("name"));
+    String password = RequestValidation.password(request.getParameter("password"));
+    boolean remember = RequestValidation.isChecked(request.getParameter("remember"));
     // Holds the identity read back from the account record that authentication succeeded against.
     // It stays null until a password actually matches, so no unauthenticated path can reach the
     // session below.
     String authenticatedName = null;
-    if (password == null || password.isEmpty() || name == null || name.isEmpty()) {
+    if (password == null || name == null) {
       response.sendRedirect(request.getContextPath() + "/loginFault.jsp");
     } else {
       try {
@@ -83,10 +81,10 @@ public class RequestLogin extends HttpServlet {
           }
           HttpSession session = request.getSession(true);
           session.setAttribute("name", authenticatedName);
-          if (remember == null) {
-            session.setMaxInactiveInterval(1200);
-          } else {
+          if (remember) {
             session.setMaxInactiveInterval(86400 * 7);
+          } else {
+            session.setMaxInactiveInterval(1200);
           }
           response.sendRedirect(request.getContextPath() + "/inside/display");
         } else {
@@ -116,9 +114,6 @@ public class RequestLogin extends HttpServlet {
    * against an account record and checked here is allowed to be stored.
    */
   private static String trustedAccountName(String accountName) {
-    if (accountName == null || !ACCOUNT_NAME.matcher(accountName).matches()) {
-      return null;
-    }
-    return accountName;
+    return RequestValidation.accountName(accountName);
   }
 }

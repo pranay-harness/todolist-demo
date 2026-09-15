@@ -1,6 +1,7 @@
 package inside;
 
 import db.ConnectionManager;
+import validation.RequestValidation;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -22,8 +23,15 @@ public class Delete extends HttpServlet {
    * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
    */
   protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-    String date = request.getParameter("date");
+    // The task key is validated as it is read: a value that is missing or does not have the
+    // allowlisted createDate token shape is null here and never reaches the statement, so the
+    // request fails closed to the task list instead of running with unchecked input.
+    String date = RequestValidation.createDate(request.getParameter("date"));
     //		System.out.println("the parameter is " + date);
+    if (date == null) {
+      response.sendRedirect("/inside/display");
+      return;
+    }
     try {
       Connection connection = ConnectionManager.getConnection();
 

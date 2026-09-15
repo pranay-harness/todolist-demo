@@ -1,6 +1,7 @@
 package inside;
 
 import db.ConnectionManager;
+import validation.RequestValidation;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -22,13 +23,18 @@ public class AddTask extends HttpServlet {
    * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
    */
   protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-    String task = request.getParameter("task");
-    String pri = request.getParameter("priority");
+    // Both untrusted values are validated as they are read: the task text must be present,
+    // non-blank and fit the task.thing column, and the priority must be a small positive integer
+    // that fits the task.priority column. Anything else is null here and the request fails closed
+    // to the task list instead of being inserted or throwing.
+    String task = RequestValidation.taskText(request.getParameter("task"));
+    String pri = RequestValidation.priority(request.getParameter("priority"));
     int priority;
 
-    if (task.isEmpty() || !pri.matches("[1-9][0-9]*"))
+    if (task == null || pri == null)
       response.sendRedirect("/inside/display");
     else {
+      // Safe: the priority was already restricted to 1-4 digits, so the parse cannot throw.
       priority = Integer.parseInt(pri);
       String name = (String) (request.getSession(false).getAttribute("name"));
       Date date = new Date();
