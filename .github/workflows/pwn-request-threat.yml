@@ -5,7 +5,15 @@ on:
       - main
       - fix-ci
   workflow_dispatch:
-  pull_request_target:
+  # This workflow builds the code of the pull request head (see `./gradlew
+  # build` below), which for fork PRs is untrusted, attacker-authored code.
+  # It therefore runs on `pull_request`, NOT on `pull_request_target`:
+  # `pull_request_target` executes in the base-repository context with access
+  # to repository secrets and a write-capable GITHUB_TOKEN, so building PR
+  # code there is a "pwn request" (CWE-829) and allows secret exfiltration
+  # and repository compromise. On `pull_request`, fork PRs get a read-only
+  # GITHUB_TOKEN and no access to secrets.
+  pull_request:
     branches:
       - main
     paths:
@@ -16,12 +24,16 @@ on:
 jobs:
   android_build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
+      # No explicit `ref:` override: the default checkout is the commit that
+      # triggered the run (the PR merge ref on `pull_request`, the pushed
+      # commit on `push`). Never resolve an attacker-controlled ref such as
+      # `github.event.pull_request.head.sha` in a privileged context.
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.after || github.event.pull_request.head.sha }}
-        
+
       - name: Build
         working-directory: custom-payment-flow/client/android-kotlin
         run: |
@@ -34,6 +46,12 @@ jobs:
       contents: write
       pull-requests: write
     uses: ./.github/workflows/wf_dependabot.yaml
+    # NOTE: this workflow is now triggered by `pull_request`, so runs for
+    # Dependabot / fork PRs receive a read-only GITHUB_TOKEN regardless of the
+    # `permissions` block above. If the auto-merge step needs write access, put
+    # it in its OWN `pull_request_target` workflow that checks out NO pull
+    # request code (metadata/labels only) — do not re-add `pull_request_target`
+    # to this workflow, which builds untrusted PR code.
     # Least privilege: do not inherit all caller/org secrets. The called
     # workflow declares no `workflow_call.secrets`, and GITHUB_TOKEN is
     # provided automatically (see the `permissions` block above). Pass any

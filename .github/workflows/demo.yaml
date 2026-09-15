@@ -1,15 +1,26 @@
 on:
-  pull_request_target:
+  # The `build` job below checks out and executes pull request code
+  # (`npm install` / `npm build` run attacker-authored scripts on fork PRs), so
+  # it must run only on `pull_request`, where fork PRs get a read-only
+  # GITHUB_TOKEN and no repository secrets. The privileged
+  # `pull_request_target` trigger was removed: it runs in the base-repository
+  # context with secrets and a write-capable token, so checking out the PR head
+  # there is a "pwn request" (CWE-829). The job already ran on `pull_request`,
+  # so no functionality is lost.
   pull_request:
 
 jobs:
   build:
     name: Build and test
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # Required by the `upload-sarif` step below; unchanged in scope.
+      security-events: write
     steps:
+      # No `ref:` override: check out the default (trusted) merge ref for this
+      # event instead of an attacker-controlled `pull_request.head.sha`.
       - uses: actions/checkout@v2
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
 
       - uses: actions/setup-node@master
       - run: |
