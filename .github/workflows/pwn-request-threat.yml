@@ -34,4 +34,9 @@ jobs:
       contents: write
       pull-requests: write
     uses: ./.github/workflows/wf_dependabot.yaml
-    secrets: inherit
+    # Least privilege (CWE-250): secrets are NOT inherited here, because inheriting hands
+    # the called workflow every repository and organization secret. Auto-merge only needs the
+    # automatic GITHUB_TOKEN, which the callee receives via the `permissions:` block above.
+    # If the callee later declares `workflow_call.secrets`, pass just those explicitly:
+    #   secrets:
+    #     SOME_SECRET: ${{ secrets.SOME_SECRET }}

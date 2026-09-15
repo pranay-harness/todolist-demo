@@ -84,7 +84,11 @@ jobs:
   build2:
     name: Build and test using a local workflow
     uses: ./.github/workflows/use_a_local_workflow.yml@master
-    secrets: inherit
+    # Least privilege (CWE-250): secrets are NOT inherited here, because inheriting hands
+    # the called workflow every repository and organization secret. Pass only the secrets the callee
+    # declares under `workflow_call.secrets`, e.g.:
+    #   secrets:
+    #     supersecret1: ${{ secrets.supersecret1 }}
     with:
       examplearg: true
   
