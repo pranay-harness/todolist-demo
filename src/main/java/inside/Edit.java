@@ -33,6 +33,20 @@ public class Edit extends HttpServlet {
   private static final Pattern SAFE_DATE = Pattern.compile("[A-Za-z0-9 _:+-]{1,64}");
 
   /**
+   * Priority is stored in an integer column, and the edit form offers 1-10 (see
+   * inside/showEditTask.jsp). Accept the same positive-integer shape AddTask accepts, bounded so the
+   * value always fits the column.
+   */
+  private static final Pattern SAFE_PRIORITY = Pattern.compile("[1-9][0-9]{0,8}");
+
+  /**
+   * Task text is free form but is stored in {@code task.thing varchar(60)}. Control characters
+   * (CR/LF, NUL, ...) are rejected so request data can never forge log records or break the stored
+   * value.
+   */
+  private static final Pattern SAFE_TASK = Pattern.compile("[^\\p{Cntrl}]{1,60}");
+
+  /**
    * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
    */
   protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -53,6 +67,13 @@ public class Edit extends HttpServlet {
       }
       //			System.out.println("the link is " + link);
       response.sendRedirect(link);
+    } else if (!SAFE_TASK.matcher(task).matches()
+        || !SAFE_PRIORITY.matcher(priority).matches()
+        || date == null
+        || !SAFE_DATE.matcher(date).matches()) {
+      // Fail closed: unvalidated request data never reaches the update logic. Redirect back to the
+      // in-application list page, the same way the rest of the app handles rejected input.
+      response.sendRedirect(DISPLAY_PAGE);
     } else {
       //			System.out.println("gan!");
 
@@ -64,10 +85,6 @@ public class Edit extends HttpServlet {
         statement.setString(2, priority);
         statement.setString(3, date);
         statement.setString(4, name);
-        System.out.println("task is " + task);
-        System.out.println("p is " + priority);
-        System.out.println("time is " + date);
-        System.out.println("name is " + name);
         statement.executeUpdate();
         statement.close();
         response.sendRedirect("/inside/display");
