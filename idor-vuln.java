@@ -32,7 +32,6 @@ public class IDORVulnerability {
     private static final String INVALID_USER = "Invalid user";
     private static final String ROLE_ADMIN = "ADMIN";
     private static final String COOKIE_USER_ID_LEVEL_2 = "userId_level2";
-    private static final String COOKIE_ROLE_LEVEL_3 = "role_level3";
     private static final String COOKIE_ROLE_LEVEL_4 = "role_level4";
 
     private static final String COOKIE_TOKEN_LEVEL_1 = "token_level1";
@@ -147,7 +146,6 @@ public class IDORVulnerability {
     @VulnerableAppRequestMapping(value = LevelConstants.LEVEL_3, htmlTemplate = "LEVEL_3/IDOR")
     public ResponseEntity<GenericVulnerabilityResponseBean<Object>> level3(
             @CookieValue(value = COOKIE_TOKEN_LEVEL_3, required = false) String cookieToken,
-            @CookieValue(value = COOKIE_ROLE_LEVEL_3, required = false) String cookieRole,
             @RequestParam(required = false) Integer id) {
 
         String actualToken = cookieToken;
@@ -155,22 +153,36 @@ public class IDORVulnerability {
             if (actualToken != null) {
                 User decodedUser = idorLoginService.decodeToken(actualToken);
                 int tokenUserId = decodedUser.getUserId();
-                String role = cookieRole != null ? cookieRole : decodedUser.getRole();
 
-                if (id == null) {
-                    id = tokenUserId;
+                // The effective role is read from the datastore for the authenticated
+                // principal only. Roles carried in the request (role cookie or token
+                // claim) are caller controlled and must never grant access.
+                String actualRole = fetchRoleById(tokenUserId);
+                if (actualRole == null) {
+                    return response(INVALID_USER, false);
                 }
 
-                if (ROLE_ADMIN.equalsIgnoreCase(role) || tokenUserId == id) {
-                    User profile = fetchUserById(id);
-                    if (profile == null) {
+                // Bind the lookup to the authenticated principal: a non admin caller may
+                // only reference its own record, and an admin may only reference an
+                // identifier that already exists server side. Everything else fails closed.
+                Integer authorizedId;
+                if (id == null || id.intValue() == tokenUserId) {
+                    authorizedId = tokenUserId;
+                } else if (ROLE_ADMIN.equalsIgnoreCase(actualRole)) {
+                    authorizedId = existingUserId(id);
+                    if (authorizedId == null) {
                         return response(USER_NOT_FOUND, false);
                     }
-                    profile.setRole(role);
-                    return response(profile, true);
+                } else {
+                    return response(ACCESS_DENIED_INSUFFICIENT, false);
                 }
 
-                return response(ACCESS_DENIED_INSUFFICIENT, false);
+                User profile = fetchUserById(authorizedId);
+                if (profile == null) {
+                    return response(USER_NOT_FOUND, false);
+                }
+                profile.setRole(actualRole);
+                return response(profile, true);
             }
 
             return response(PROVIDE_LOGIN_OR_TOKEN, false);
@@ -291,6 +303,33 @@ public class IDORVulnerability {
             return null;
         }
         return users.get(0);
+    }
+
+    // Server side role of the authenticated principal, keyed by the token user id.
+    // Returns null when the principal no longer exists so callers can fail closed.
+    private String fetchRoleById(int userId) {
+        List<String> roles =
+                jdbcTemplate.query(
+                        SQL_ROLE_BY_ID,
+                        new Object[] {userId},
+                        (rs, rowNum) -> rs.getString("role"));
+
+        if (roles.isEmpty()) {
+            return null;
+        }
+        return roles.get(0);
+    }
+
+    // Resolves a caller supplied reference to the equivalent server known identifier and
+    // returns null when no such record exists, so an unvalidated reference never reaches
+    // the data access layer.
+    private Integer existingUserId(int requestedId) {
+        for (User user : fetchAllUsers()) {
+            if (user.getUserId() == requestedId) {
+                return user.getUserId();
+            }
+        }
+        return null;
     }
 
     private List<User> fetchAllUsers() {
