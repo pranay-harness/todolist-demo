@@ -1,3 +1,6 @@
 Harness Sample To-Do List
 #test data
-dummysecret: AB04LYMBf1lDP5oeY4hupxd4HJhLmN6azUku3xEbeE3SUx5G3ZYzhbiwVtK4i7AmqyU9OZkwB4v8E9qM
+# The value below is supplied at runtime from the environment / secrets manager.
+# The literal that used to be committed here must be rotated (revoked and reissued),
+# because it is still present in git history.
+dummysecret: ${DUMMY_SECRET}
