@@ -1,6 +1,7 @@
 package login;
 
 import db.ConnectionManager;
+import util.Passwords;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -47,7 +48,9 @@ public class RequestLogin extends HttpServlet {
 
         while (resultSet.next()) {
           if (resultSet.getString(1).equals(name)) {
-            if (resultSet.getString(2).equals(password)) {
+            // Constant-time comparison: String.equals leaks how many leading characters
+            // matched through its running time (CWE-208).
+            if (Passwords.matches(password, resultSet.getString(2))) {
               success = true;
               break;
             }
