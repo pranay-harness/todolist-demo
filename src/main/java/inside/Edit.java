@@ -3,9 +3,11 @@ package inside;
 import db.ConnectionManager;
 
 import java.io.IOException;
+import java.net.URLEncoder;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.regex.Pattern;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -20,6 +22,17 @@ public class Edit extends HttpServlet {
   private static final long serialVersionUID = 1L;
 
   /**
+   * Fixed in-application page used when the requested task date is missing or untrusted.
+   */
+  private static final String DEFAULT_PAGE = "/inside/display";
+
+  /**
+   * Allowlisted shape of the createDate token stored by AddTask (e.g. Mon_Sep_15_18:19:00_UTC_2026).
+   * Rejects any scheme, "//" prefix, backslash, CR/LF or host, so the destination stays in-app.
+   */
+  private static final Pattern SAFE_DATE = Pattern.compile("[A-Za-z0-9:_.+-]{1,64}");
+
+  /**
    * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
    */
   protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -32,7 +45,14 @@ public class Edit extends HttpServlet {
     String task = request.getParameter("task");
     if (task == null || priority == null || task.isEmpty() || priority.isEmpty()) {
       //			System.out.println("nimei!");
-      String link = "/inside/showEditTask.jsp?date=" + date;
+      // The redirect target is a fixed relative in-application path; the request
+      // parameter is only used as an allowlisted, URL-encoded query value, so it
+      // cannot point the redirect at an external host. Unknown input fails closed
+      // to the task list page.
+      String link = DEFAULT_PAGE;
+      if (date != null && SAFE_DATE.matcher(date).matches()) {
+        link = "/inside/showEditTask.jsp?date=" + URLEncoder.encode(date, "UTF-8");
+      }
       //			System.out.println("the link is " + link);
       response.sendRedirect(link);
     } else {
