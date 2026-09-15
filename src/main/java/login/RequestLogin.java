@@ -1,6 +1,7 @@
 package login;
 
 import db.ConnectionManager;
+import util.SafeRedirect;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -29,7 +30,7 @@ public class RequestLogin extends HttpServlet {
     String remember = request.getParameter("remember");
     boolean success = false;
     if (password == null || password.isEmpty() || name == null || name.isEmpty()) {
-      response.sendRedirect(request.getContextPath() + "/loginFault.jsp");
+      SafeRedirect.send(request, response, SafeRedirect.LOGIN_FAULT);
     } else {
       try {
 
@@ -62,9 +63,9 @@ public class RequestLogin extends HttpServlet {
           } else {
             request.getSession().setMaxInactiveInterval(86400 * 7);
           }
-          response.sendRedirect(request.getContextPath() + "/inside/display");
+          SafeRedirect.send(request, response, SafeRedirect.INSIDE_DISPLAY);
         } else {
-          response.sendRedirect(request.getContextPath() + "/loginFault.jsp");
+          SafeRedirect.send(request, response, SafeRedirect.LOGIN_FAULT);
         }
       } catch (SQLException e) {
         e.printStackTrace(System.out);

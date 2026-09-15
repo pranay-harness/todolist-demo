@@ -1,6 +1,7 @@
 package inside;
 
 import db.ConnectionManager;
+import util.SafeRedirect;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -32,9 +33,8 @@ public class Edit extends HttpServlet {
     String task = request.getParameter("task");
     if (task == null || priority == null || task.isEmpty() || priority.isEmpty()) {
       //			System.out.println("nimei!");
-      String link = "/inside/showEditTask.jsp?date=" + date;
-      //			System.out.println("the link is " + link);
-      response.sendRedirect(link);
+      // The date is carried as a URL encoded query value of an allowlisted page, it cannot pick the destination.
+      SafeRedirect.send(request, response, SafeRedirect.INSIDE_EDIT_TASK, "date", date);
     } else {
       //			System.out.println("gan!");
 
