@@ -3,9 +3,11 @@ package inside;
 import db.ConnectionManager;
 
 import java.io.IOException;
+import java.net.URLEncoder;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.regex.Pattern;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -18,6 +20,17 @@ import javax.servlet.http.HttpSession;
 
 public class Edit extends HttpServlet {
   private static final long serialVersionUID = 1L;
+
+  /** Fixed, server-side controlled redirect targets. Never built from request data. */
+  private static final String EDIT_TASK_PAGE = "/inside/showEditTask.jsp";
+  private static final String DISPLAY_PAGE = "/inside/display";
+
+  /**
+   * Task create dates are generated server-side from Date#toString() with blanks replaced by
+   * underscores (e.g. "Mon_Sep_15_12:34:56_UTC_2026"), so only these characters are accepted.
+   * Anything else (path separators, scheme/host characters, encoded escapes) is rejected.
+   */
+  private static final Pattern SAFE_DATE = Pattern.compile("[A-Za-z0-9 _:+-]{1,64}");
 
   /**
    * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
@@ -32,7 +45,12 @@ public class Edit extends HttpServlet {
     String task = request.getParameter("task");
     if (task == null || priority == null || task.isEmpty() || priority.isEmpty()) {
       //			System.out.println("nimei!");
-      String link = "/inside/showEditTask.jsp?date=" + date;
+      // The destination is a fixed in-application page; the request value is only ever carried
+      // as an allowlisted, URL-encoded query parameter so it cannot alter scheme, host or path.
+      String link = DISPLAY_PAGE;
+      if (date != null && SAFE_DATE.matcher(date).matches()) {
+        link = EDIT_TASK_PAGE + "?date=" + URLEncoder.encode(date, "UTF-8");
+      }
       //			System.out.println("the link is " + link);
       response.sendRedirect(link);
     } else {
