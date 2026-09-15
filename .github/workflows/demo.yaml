@@ -104,5 +104,8 @@ jobs:
       - name:
           blah
         run: |
-          CONTENTS=$(curl https://blah.com)
-          eval $CONTENTS
+          # Remote responses are untrusted input: fetch and print them only.
+          # Never eval/pipe remote data into a shell — the remote server could
+          # then execute arbitrary commands on this runner.
+          CONTENTS=$(curl --fail --silent --show-error https://blah.com)
+          printf '%s\n' "$CONTENTS"
