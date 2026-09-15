@@ -7,9 +7,13 @@ jobs:
     name: Build and test
     runs-on: ubuntu-latest
     steps:
+      # Pwn request (CWE-829): `pull_request_target` runs this job in the base repository's
+      # privileged context (repository secrets such as `secrets.supersecret1` and a
+      # write-capable GITHUB_TOKEN), and the job then *executes* the checked-out tree
+      # (`npm install` / `npm build`, local actions). Checking out
+      # `github.event.pull_request.head.sha` would hand any PR author arbitrary code execution
+      # with those secrets. Check out the default (trusted base) ref instead.
       - uses: actions/checkout@v2
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
 
       - uses: actions/setup-node@master
       - run: |

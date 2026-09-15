@@ -16,12 +16,20 @@ on:
 jobs:
   android_build:
     runs-on: ubuntu-latest
+    # Least privilege: this job only needs to read the repository to build it.
+    permissions:
+      contents: read
     steps:
+      # Pwn request (CWE-829): this workflow is also triggered by `pull_request_target`, which
+      # runs in the base repository's privileged context (repository secrets and a
+      # write-capable GITHUB_TOKEN) and this job then *executes* the checked-out tree via
+      # `./gradlew build`. Checking out `github.event.pull_request.head.sha` would therefore
+      # execute attacker-controlled code with access to secrets. Use the default ref instead:
+      # the trusted base branch for `pull_request_target`, and GITHUB_SHA for
+      # push / workflow_dispatch runs.
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.after || github.event.pull_request.head.sha }}
-        
+
       - name: Build
         working-directory: custom-payment-flow/client/android-kotlin
         run: |
