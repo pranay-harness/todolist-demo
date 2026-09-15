@@ -147,35 +147,37 @@ public class IDORVulnerability {
     @VulnerableAppRequestMapping(value = LevelConstants.LEVEL_3, htmlTemplate = "LEVEL_3/IDOR")
     public ResponseEntity<GenericVulnerabilityResponseBean<Object>> level3(
             @CookieValue(value = COOKIE_TOKEN_LEVEL_3, required = false) String cookieToken,
+            // Still accepted so existing clients keep working, but intentionally not read:
+            // a client controlled role cookie must never take part in authorization.
             @CookieValue(value = COOKIE_ROLE_LEVEL_3, required = false) String cookieRole,
             @RequestParam(required = false) Integer id) {
 
         String actualToken = cookieToken;
         try {
-            if (actualToken != null) {
-                User decodedUser = idorLoginService.decodeToken(actualToken);
-                int tokenUserId = decodedUser.getUserId();
-                String role = cookieRole != null ? cookieRole : decodedUser.getRole();
-
-                if (id == null) {
-                    id = tokenUserId;
-                }
-
-                if (ROLE_ADMIN.equalsIgnoreCase(role) || tokenUserId == id) {
-                    User profile = fetchUserById(id);
-                    if (profile == null) {
-                        return response(USER_NOT_FOUND, false);
-                    }
-                    profile.setRole(role);
-                    return response(profile, true);
-                }
-
-                return response(ACCESS_DENIED_INSUFFICIENT, false);
+            if (actualToken == null) {
+                return response(PROVIDE_LOGIN_OR_TOKEN, false, HttpStatus.UNAUTHORIZED);
             }
 
-            return response(PROVIDE_LOGIN_OR_TOKEN, false);
+            User decodedUser = idorLoginService.decodeToken(actualToken);
+            // The only trusted object reference is the one derived from the authenticated
+            // principal. The client supplied "id" request parameter and the client supplied
+            // role cookie are never used to select or authorize the record.
+            int authenticatedUserId = decodedUser.getUserId();
+
+            // Object level authorization: fail closed when the caller asks for a record that
+            // does not belong to it, instead of dereferencing the untrusted reference.
+            if (id != null && id.intValue() != authenticatedUserId) {
+                return response(ACCESS_DENIED_INSUFFICIENT, false, HttpStatus.FORBIDDEN);
+            }
+
+            User profile = fetchUserById(authenticatedUserId);
+            if (profile == null) {
+                return response(USER_NOT_FOUND, false, HttpStatus.NOT_FOUND);
+            }
+            // Role is reported from the persisted record, not from the tamperable cookie.
+            return response(profile, true, HttpStatus.OK);
         } catch (Exception exception) {
-            return response(INVALID_TOKEN, false);
+            return response(INVALID_TOKEN, false, HttpStatus.UNAUTHORIZED);
         }
     }
 
