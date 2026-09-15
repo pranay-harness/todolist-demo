@@ -36,5 +36,6 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+    # No secrets are forwarded: the callee must declare the secrets it needs via
+    # `on.workflow_call.secrets` and they must be passed here explicitly by name.
     uses: ./.github/workflows/wf_dependabot.yaml
-    secrets: inherit
