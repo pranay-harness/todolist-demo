@@ -47,16 +47,20 @@ public class RequestLogin extends HttpServlet {
 
         //				System.out.println("nima");
 
+        // Identity confirmed by the database lookup, never the raw request parameter.
+        String authenticatedName = null;
+
         while (resultSet.next()) {
           if (resultSet.getString(2).equals(password)) {
-            success = true;
+            authenticatedName = resultSet.getString(1);
+            success = authenticatedName != null && !authenticatedName.isEmpty();
             break;
           }
         }
         resultSet.close();
         statement.close();
         if (success) {
-          request.getSession().setAttribute("name", name);
+          request.getSession().setAttribute("name", authenticatedName);
           if (remember == null) {
             request.getSession().setMaxInactiveInterval(1200);
           } else {
