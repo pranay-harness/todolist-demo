@@ -6,6 +6,7 @@
 <%@page import = "java.sql.SQLException" %>
 <%@page import = "java.sql.Statement" %>
 <%@page import = "db.ConnectionManager" %>
+<%@page import = "util.Encode" %>
 
 
 
@@ -92,9 +93,9 @@
 										String priority = rset.getString(2);
 										date = date.replace(' ','_');
 										out.println("<tr>");
-										out.println("<td style='text-align:center;'>" + task +"</td>");	
-										out.println("<td style='text-align:center;'>" + priority +"</td>");	
-										out.println("<td style='text-align:center;'>" + date +"</td>");								
+										out.println("<td style='text-align:center;'>" + Encode.html(task) +"</td>");	
+										out.println("<td style='text-align:center;'>" + Encode.html(priority) +"</td>");	
+										out.println("<td style='text-align:center;'>" + Encode.html(date) +"</td>");								
 										out.println("</tr>");
 									}
 									rset.close();
@@ -115,7 +116,7 @@
 						<form class = "form-inline pull-center" style = "margin-left:15px;margin-right:15px;" action = "/inside/editTask">
 						    <input type="text" class="input-xxlarge" placeholder="Task" name = "task">
 						    <input type="text" class="input-small" placeholder="Priority(1-10)" name = "priority">
-						    <%out.println("<input class='input-xlarge' name = 'date' type='text' value='" + date + "' readonly='readonly'>"); %>
+						    <%out.println("<input class='input-xlarge' name = 'date' type='text' value='" + Encode.html(date) + "' readonly='readonly'>"); %>
 						    <br><br>
 						    <button type="submit" class="btn-block btn-large btn-success">OK</button>
 						    <a class = "btn btn-block btn-large" href = "/inside/display">Back</a>
