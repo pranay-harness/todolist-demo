@@ -1,10 +1,9 @@
 package login;
 
 import db.ConnectionManager;
+import db.StoredPassword;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -78,12 +77,11 @@ public class RequestLogin extends HttpServlet {
   }
 
   /**
-   * Compares the stored password with the supplied one without leaking timing information.
+   * Verifies the supplied password against the stored one without leaking timing information. The
+   * stored value is a salted one-way hash, so the supplied password is re-hashed with the recorded
+   * parameters and the resulting hashes are compared in constant time.
    */
   private static boolean passwordMatches(String storedPassword, String suppliedPassword) {
-    if (storedPassword == null || suppliedPassword == null) {
-      return false;
-    }
-    return MessageDigest.isEqual(storedPassword.getBytes(StandardCharsets.UTF_8), suppliedPassword.getBytes(StandardCharsets.UTF_8));
+    return StoredPassword.matches(storedPassword, suppliedPassword);
   }
 }

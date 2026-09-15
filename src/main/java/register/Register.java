@@ -1,8 +1,11 @@
 package register;
 
 import db.ConnectionManager;
+import db.StoredPassword;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -25,7 +28,7 @@ public class Register extends HttpServlet {
     try {
       Connection connection = ConnectionManager.getConnection();
       Statement statement = connection.createStatement();
-      statement.executeUpdate("create table accounts (name varchar(32)," + " password varchar(32))");
+      statement.executeUpdate("create table accounts (name varchar(32)," + " password varchar(255))");
       statement
           .executeUpdate("create table task (name varchar(32)," + " thing varchar(60), priority integer, createDate varchar(80),primary key (createDate))");
       statement.close();
@@ -67,7 +70,8 @@ public class Register extends HttpServlet {
 
 
 
-    if (password == null || password.isEmpty() || name == null || name.isEmpty() || !password.equals(password2)) {
+    if (password == null || password.isEmpty() || name == null || name.isEmpty()
+        || !confirmationMatches(password, password2)) {
       response.sendRedirect(request.getContextPath() + "/wrongRegister.jsp");
     } else if (exists) {
       response.sendRedirect(request.getContextPath() + "/userExists.jsp");
@@ -77,7 +81,9 @@ public class Register extends HttpServlet {
         PreparedStatement statement = connection.prepareStatement("insert into accounts(name,password) values(?, ?)");
 
         statement.setString(1, name);
-        statement.setString(2, password);
+        // The cleartext password is never persisted: only a salted, iterated one-way hash of it is
+        // stored, so the table cannot be used to recover the password it was created from.
+        statement.setString(2, StoredPassword.hash(password));
 
         statement.executeUpdate();
 
@@ -90,6 +96,19 @@ public class Register extends HttpServlet {
       }
       response.sendRedirect(request.getContextPath() + "/login.jsp");
     }
+  }
+
+  /**
+   * Returns true when the chosen password and its confirmation are identical. The two values are
+   * compared in constant time so the check cannot be used to learn the password character by
+   * character. A missing confirmation never matches.
+   */
+  private static boolean confirmationMatches(String password, String confirmation) {
+    if (confirmation == null) {
+      return false;
+    }
+    return MessageDigest.isEqual(password.getBytes(StandardCharsets.UTF_8),
+        confirmation.getBytes(StandardCharsets.UTF_8));
   }
 }
 
