@@ -1,3 +1,5 @@
 Harness Sample To-Do List
 #test data
-dummysecret: AB04LYMBf1lDP5oeY4hupxd4HJhLmN6azUku3xEbeE3SUx5G3ZYzhbiwVtK4i7AmqyU9OZkwB4v8E9qM
+dummysecret: <supplied at runtime from the DUMMY_SECRET env var / secrets manager - never commit credential values here>
+# The API-key-shaped value previously on the line above was removed. It stays in git
+# history, so if it ever matched a live credential it must be rotated (revoked/reissued).

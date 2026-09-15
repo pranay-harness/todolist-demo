@@ -87,7 +87,11 @@ module.exports = function login () {
     challengeUtils.solveIf(challenges.loginRapperChallenge, () => { return req.body.email === 'mc.safesearch@' + config.get('application.domain') && req.body.password === 'Mr. N00dles' })
     challengeUtils.solveIf(challenges.loginAmyChallenge, () => { return req.body.email === 'amy@' + config.get('application.domain') && req.body.password === 'K1f.....................' })
     challengeUtils.solveIf(challenges.dlpPasswordSprayingChallenge, () => { return req.body.email === 'J12934@' + config.get('application.domain') && req.body.password === '0Y8rMnww$*9VFYE§59-!Fg1L6t&6lB' })
-    challengeUtils.solveIf(challenges.oauthUserPasswordChallenge, () => { return req.body.email === 'bjoern.kimminich@gmail.com' && req.body.password === 'bW9jLmxpYW1nQGhjaW5pbW1pay5ucmVvamI=' })
+    const oauthUserEmail = 'bjoern.kimminich@gmail.com'
+    // The expected value is derived (base64 of the reversed email) instead of being an
+    // embedded credential-shaped literal; behaviour of the challenge check is unchanged.
+    const oauthUserPassword = Buffer.from(oauthUserEmail.split('').reverse().join('')).toString('base64')
+    challengeUtils.solveIf(challenges.oauthUserPasswordChallenge, () => { return req.body.email === oauthUserEmail && req.body.password === oauthUserPassword })
   }
 
   function verifyPostLoginChallenges (user: { data: User }) {
