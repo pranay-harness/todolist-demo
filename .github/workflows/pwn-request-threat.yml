@@ -34,4 +34,8 @@ jobs:
       contents: write
       pull-requests: write
     uses: ./.github/workflows/wf_dependabot.yaml
-    secrets: inherit
+    # No blanket inheritance: `inherit` would hand every repository and
+    # organisation credential to the called workflow, which is especially unsafe
+    # under a pull_request_target trigger. GITHUB_TOKEN is already available to
+    # reusable workflows; pass any additional value explicitly, by name, and only
+    # if the called workflow declares it under workflow_call.
