@@ -1,6 +1,7 @@
 package login;
 
 import db.ConnectionManager;
+import validation.RequestValidator;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -32,7 +33,13 @@ public class RequestLogin extends HttpServlet {
     // Canonical user name as stored in the accounts table; only server-derived data is put in the
     // session, never the raw request parameter.
     String accountName = null;
-    if (password == null || password.isEmpty() || name == null || name.isEmpty()) {
+    // Validate every submitted parameter at the trust boundary before it is used to query the
+    // database or to size the session: the name and password must match the allowlists derived from
+    // the accounts table, and "remember" must be a value the login form can actually produce.
+    // Anything else fails closed to the existing login failure page.
+    if (!RequestValidator.isAccountName(name)
+        || !RequestValidator.isPassword(password)
+        || !RequestValidator.isRememberFlag(remember)) {
       response.sendRedirect(request.getContextPath() + "/loginFault.jsp");
     } else {
       try {
@@ -68,10 +75,12 @@ public class RequestLogin extends HttpServlet {
           // Store the account name loaded from the authenticated database row, not the raw
           // request parameter, so the session only carries trusted server-side state.
           session.setAttribute("name", accountName);
-          if (remember == null) {
-            session.setMaxInactiveInterval(1200);
-          } else {
+          // Only the validated opt-in value extends the session lifetime; an absent checkbox keeps
+          // the short timeout.
+          if (RequestValidator.isRememberOptIn(remember)) {
             session.setMaxInactiveInterval(86400 * 7);
+          } else {
+            session.setMaxInactiveInterval(1200);
           }
           response.sendRedirect(request.getContextPath() + "/inside/display");
         } else {

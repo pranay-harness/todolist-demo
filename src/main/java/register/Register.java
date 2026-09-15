@@ -1,6 +1,7 @@
 package register;
 
 import db.ConnectionManager;
+import validation.RequestValidator;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -42,6 +43,17 @@ public class Register extends HttpServlet {
     String password2 = request.getParameter("password2");
     boolean exists = false;
 
+    // Validate the submitted account details at the trust boundary, before they are used to query
+    // the database or to create an account. The allowlists match the accounts table column widths,
+    // and the confirmation still has to equal the password, so empty or mismatched passwords are
+    // rejected on the same page as before.
+    if (!RequestValidator.isAccountName(name)
+        || !RequestValidator.isPassword(password)
+        || !RequestValidator.isPassword(password2)
+        || !password.equals(password2)) {
+      response.sendRedirect(request.getContextPath() + "/wrongRegister.jsp");
+      return;
+    }
 
     try {
       Connection connection = ConnectionManager.getConnection();
@@ -67,9 +79,7 @@ public class Register extends HttpServlet {
 
 
 
-    if (password == null || password.isEmpty() || name == null || name.isEmpty() || !password.equals(password2)) {
-      response.sendRedirect(request.getContextPath() + "/wrongRegister.jsp");
-    } else if (exists) {
+    if (exists) {
       response.sendRedirect(request.getContextPath() + "/userExists.jsp");
     } else {
       try {

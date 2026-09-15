@@ -1,6 +1,7 @@
 package inside;
 
 import db.ConnectionManager;
+import validation.RequestValidator;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -26,7 +27,11 @@ public class AddTask extends HttpServlet {
     String pri = request.getParameter("priority");
     int priority;
 
-    if (task.isEmpty() || !pri.matches("[1-9][0-9]*"))
+    // Validate both parameters at the trust boundary: the task text has to fit the
+    // task.thing varchar(60) column and carry no control characters, and the priority has to be a
+    // bounded positive integer (a missing or oversized value used to slip through and fail later).
+    // Invalid input fails closed to the task list, as before.
+    if (!RequestValidator.isTaskText(task) || !RequestValidator.isPriority(pri))
       response.sendRedirect("/inside/display");
     else {
       priority = Integer.parseInt(pri);

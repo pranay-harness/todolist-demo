@@ -1,6 +1,7 @@
 package inside;
 
 import db.ConnectionManager;
+import validation.RequestValidator;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -24,6 +25,13 @@ public class Delete extends HttpServlet {
   protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
     String date = request.getParameter("date");
     //		System.out.println("the parameter is " + date);
+    // Validate the create date at the trust boundary before it reaches the delete statement: only
+    // the server-generated date shape is accepted (same rule as inside.Edit). Anything else fails
+    // closed to the task list instead of running a delete with unvalidated input.
+    if (!RequestValidator.isCreateDate(date)) {
+      response.sendRedirect("/inside/display");
+      return;
+    }
     try {
       Connection connection = ConnectionManager.getConnection();
 
