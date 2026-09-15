@@ -11,9 +11,11 @@ jobs:
   NextGen-Static-Analysis:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    # Supply chain (CWE-1357/CWE-353): actions are pinned to immutable commit SHAs so
+    # their owners cannot silently change the code this workflow executes.
+    - uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26  # v3
     - name: Setup Java JDK v11
-      uses: actions/setup-java@v3
+      uses: actions/setup-java@e9fbacdec3bb3b6036605a3e6f7995d66773a8c6  # v3
       with:
         distribution: zulu
         java-version: 11

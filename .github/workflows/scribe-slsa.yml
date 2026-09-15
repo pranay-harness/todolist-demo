@@ -9,13 +9,16 @@ jobs:
   scribe-sign-verify:
     runs-on: ubuntu-latest
     steps:
-      - uses: scribe-security/action-slsa@master
+      # Supply chain (CWE-1357/CWE-353): `@master` is a moving branch, so the action's
+      # owner (or anyone who compromises that repository) could silently change the code
+      # this workflow executes with SCRIBE_TOKEN in scope. Pinned to immutable commit SHAs.
+      - uses: scribe-security/action-slsa@3b9457645d84126d41fea0c744cc075a8f65aaa9  # master branch head at pin time
         with:
           target: pranaycshah/todolist-demo:ssca1
           scribe-enable: true
           scribe-client-secret: ${{ secrets.SCRIBE_TOKEN }}
 
-      - uses: scribe-security/action-verify@master
+      - uses: scribe-security/action-verify@2d486a137cb4076f916d081072a65e05e468fc0f  # master branch head at pin time
         with:
           target: pranaycshah/todolist-demo:ssca1
           scribe-enable: true

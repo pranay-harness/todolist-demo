@@ -28,7 +28,9 @@ jobs:
       # the trusted base branch for `pull_request_target`, and GITHUB_SHA for
       # push / workflow_dispatch runs.
       - name: Checkout code
-        uses: actions/checkout@v4
+        # Supply chain (CWE-1357/CWE-353): pinned to an immutable commit SHA so the
+        # action's owner cannot silently change the code this workflow executes.
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
 
       - name: Build
         working-directory: custom-payment-flow/client/android-kotlin
