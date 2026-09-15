@@ -113,8 +113,10 @@ jobs:
           ${{ env.workdir }}/src
      
         run: docker build -t semgrep-scanner:latest .
-      - name:
-          blah
-        run: |
-          CONTENTS=$(curl https://blah.com)
-          eval $CONTENTS
+      # Removed a step that downloaded a remote URL and passed the response
+      # body to `eval` (CWE-78): the remote host, or anyone able to tamper with
+      # the response, could execute arbitrary shell commands on the runner.
+      # There is no legitimate artifact behind that URL, so nothing is fetched
+      # here any more. If this job ever needs a real dependency, install it
+      # from a pinned version and verify a published checksum/signature before
+      # running it -- never `eval`/`bash` content straight off the network.
