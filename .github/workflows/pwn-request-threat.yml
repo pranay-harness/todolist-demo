@@ -32,7 +32,9 @@ jobs:
       # commit on `push`). Never resolve an attacker-controlled ref such as
       # `github.event.pull_request.head.sha` in a privileged context.
       - name: Checkout code
-        uses: actions/checkout@v4
+        # Pinned to an immutable commit SHA (CWE-1357/CWE-353): a floating
+        # major tag can be repointed at new code without a change here.
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Build
         working-directory: custom-payment-flow/client/android-kotlin

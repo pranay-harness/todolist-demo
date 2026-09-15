@@ -23,7 +23,9 @@ jobs:
       digests: ${{ steps.hash.outputs.digests }}
 
     steps:
-      - uses: actions/checkout@v4
+      # Pinned to an immutable commit SHA (CWE-1357/CWE-353) so a floating
+      # major tag cannot silently change the code that runs in this job.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       # ========================================================
       #

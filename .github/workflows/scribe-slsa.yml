@@ -9,13 +9,17 @@ jobs:
   scribe-sign-verify:
     runs-on: ubuntu-latest
     steps:
-      - uses: scribe-security/action-slsa@master
+      # Pinned to immutable commit SHAs (CWE-1357/CWE-353). `@master` is a
+      # branch: its head moves, so a compromise or change upstream would run
+      # new code here with SCRIBE_TOKEN. SHAs below are the heads of
+      # `master` at pin time; bump them deliberately when upgrading.
+      - uses: scribe-security/action-slsa@3b9457645d84126d41fea0c744cc075a8f65aaa9 # master@2026-09-15
         with:
           target: pranaycshah/todolist-demo:ssca1
           scribe-enable: true
           scribe-client-secret: ${{ secrets.SCRIBE_TOKEN }}
 
-      - uses: scribe-security/action-verify@master
+      - uses: scribe-security/action-verify@2d486a137cb4076f916d081072a65e05e468fc0f # master@2026-09-15
         with:
           target: pranaycshah/todolist-demo:ssca1
           scribe-enable: true
