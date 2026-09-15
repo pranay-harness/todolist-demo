@@ -32,11 +32,36 @@ public class ConnectionManager {
       // Credentials are never hard-coded here: they are read from a system property or the
       // environment (populate them from your KMS / secrets manager at deploy time) so that
       // they can be audited and rotated outside of source control.
+      String url = resolve(URL_PROPERTY, URL_ENV);
+      String user = resolve(USER_PROPERTY, USER_ENV);
+      String password = resolve(PASSWORD_PROPERTY, PASSWORD_ENV);
+
+      if (url == null) {
+        // Nothing is configured, so use the throw-away embedded in-memory database. It is created
+        // inside this JVM only and is not reachable by any other process, so the app can still be
+        // started locally without provisioning credentials.
+        url = DEFAULT_URL;
+        if (user == null) {
+          user = DEFAULT_USER;
+        }
+        if (password == null) {
+          password = "";
+        }
+      } else if (user == null || password == null || password.isEmpty()) {
+        // A datasource was explicitly pointed at something other than the in-JVM default, so it
+        // must be authenticated. Fail closed rather than silently opening an unauthenticated
+        // connection to a real database (CWE-306).
+        throw new IllegalStateException(
+            "A datasource is configured through " + URL_PROPERTY + " / " + URL_ENV
+                + " but no credentials were supplied. Provide " + USER_PROPERTY + " / " + USER_ENV
+                + " and a non-empty " + PASSWORD_PROPERTY + " / " + PASSWORD_ENV
+                + " from your secrets manager before starting the application.");
+      }
+
       Properties connectionProperties = new Properties();
-      connectionProperties.setProperty("user", resolve(USER_PROPERTY, USER_ENV, DEFAULT_USER));
-      connectionProperties.setProperty("password", resolve(PASSWORD_PROPERTY, PASSWORD_ENV, ""));
-      connection =
-          DriverManager.getConnection(resolve(URL_PROPERTY, URL_ENV, DEFAULT_URL), connectionProperties);
+      connectionProperties.setProperty("user", user);
+      connectionProperties.setProperty("password", password);
+      connection = DriverManager.getConnection(url, connectionProperties);
     } catch (SQLException e) {
       throw new RuntimeException(e);
     }
@@ -44,14 +69,14 @@ public class ConnectionManager {
 
   /**
    * Returns the configured value for the given system property, falling back to the environment
-   * variable and finally to the supplied default for the embedded in-memory database.
+   * variable, or {@code null} when neither of them supplies a value.
    */
-  private static String resolve(String propertyName, String environmentName, String defaultValue) {
+  private static String resolve(String propertyName, String environmentName) {
     String value = System.getProperty(propertyName);
     if (value == null || value.isEmpty()) {
       value = System.getenv(environmentName);
     }
-    return (value == null) ? defaultValue : value;
+    return value;
   }
 
   public static synchronized Connection getConnection() {
