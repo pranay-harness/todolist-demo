@@ -123,7 +123,7 @@
 						
 			<div class = "row">
 				<div class = "span10 offset1">
-						<form class = "form-inline pull-center" style = "margin-left:15px;margin-right:15px;" action = "/inside/editTask">
+						<form class = "form-inline pull-center" style = "margin-left:15px;margin-right:15px;" action = "/inside/editTask" method = "post">
 						    <input type="text" class="input-xxlarge" placeholder="Task" name = "task">
 						    <input type="text" class="input-small" placeholder="Priority(1-10)" name = "priority">
 						    <%out.println("<input class='input-xlarge' name = 'date' type='text' value='" + escapeHtml(date) + "' readonly='readonly'>"); %>
