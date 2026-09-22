@@ -3,6 +3,8 @@ package inside;
 import db.ConnectionManager;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -32,7 +34,8 @@ public class Edit extends HttpServlet {
     String task = request.getParameter("task");
     if (task == null || priority == null || task.isEmpty() || priority.isEmpty()) {
       //			System.out.println("nimei!");
-      String link = "/inside/showEditTask.jsp?date=" + date;
+      String safeDate = URLEncoder.encode(date != null ? date : "", StandardCharsets.UTF_8.name());
+      String link = "/inside/showEditTask.jsp?date=" + safeDate;
       //			System.out.println("the link is " + link);
       response.sendRedirect(link);
     } else {

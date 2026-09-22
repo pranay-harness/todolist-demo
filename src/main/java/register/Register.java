@@ -67,9 +67,9 @@ public class Register extends HttpServlet {
 
 
     if (password == null || password.isEmpty() || name == null || name.isEmpty() || !password.equals(password2)) {
-      response.sendRedirect(request.getContextPath() + "/wrongRegister.jsp");
+      response.sendRedirect("/wrongRegister.jsp");
     } else if (exists) {
-      response.sendRedirect(request.getContextPath() + "/userExists.jsp");
+      response.sendRedirect("/userExists.jsp");
     } else {
       try {
         Connection connection = ConnectionManager.getConnection();
@@ -87,7 +87,7 @@ public class Register extends HttpServlet {
         System.err.println("ERROR: failed to load HSQLDB JDBC driver.FUCK!");
         e.printStackTrace(System.out);
       }
-      response.sendRedirect(request.getContextPath() + "/login.jsp");
+      response.sendRedirect("/login.jsp");
     }
   }
 }

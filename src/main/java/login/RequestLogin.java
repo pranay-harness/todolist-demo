@@ -29,7 +29,7 @@ public class RequestLogin extends HttpServlet {
     String remember = request.getParameter("remember");
     boolean success = false;
     if (password == null || password.isEmpty() || name == null || name.isEmpty()) {
-      response.sendRedirect(request.getContextPath() + "/loginFault.jsp");
+      response.sendRedirect("/loginFault.jsp");
     } else {
       try {
 
@@ -62,9 +62,9 @@ public class RequestLogin extends HttpServlet {
           } else {
             request.getSession().setMaxInactiveInterval(86400 * 7);
           }
-          response.sendRedirect(request.getContextPath() + "/inside/display");
+          response.sendRedirect("/inside/display");
         } else {
-          response.sendRedirect(request.getContextPath() + "/loginFault.jsp");
+          response.sendRedirect("/loginFault.jsp");
         }
       } catch (SQLException e) {
         e.printStackTrace(System.out);
