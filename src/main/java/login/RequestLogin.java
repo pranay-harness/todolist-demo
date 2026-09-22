@@ -3,6 +3,7 @@ package login;
 import db.ConnectionManager;
 
 import java.io.IOException;
+import java.security.MessageDigest;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -47,7 +48,7 @@ public class RequestLogin extends HttpServlet {
 
         while (resultSet.next()) {
           if (resultSet.getString(1).equals(name)) {
-            if (resultSet.getString(2).equals(password)) {
+            if (MessageDigest.isEqual(resultSet.getString(2).getBytes(), password.getBytes())) {
               success = true;
               break;
             }
