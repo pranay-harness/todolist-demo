@@ -7,7 +7,18 @@
 <%@page import = "java.sql.Statement" %>
 <%@page import = "db.ConnectionManager" %>
 
-
+<%!
+	// Helper method to escape HTML special characters
+	private String escapeHtml(String text) {
+		if (text == null) return "";
+		return text
+			.replace("&", "&amp;")
+			.replace("<", "&lt;")
+			.replace(">", "&gt;")
+			.replace("\"", "&quot;")
+			.replace("'", "&#39;");
+	}
+%>
 
 <!DOCTYPE html>
 <html lang="en">
@@ -108,16 +119,16 @@
 										String date = rset.getString(2);
 										date = date.replace(' ','_');
 										out.println("<tr>");
-										out.println("<td style='text-align:center;'>" + task +"</td>");	
-										out.println("<td style='text-align:center;'>" + priority +"</td>");	
-										out.println("<td style='text-align:center;'>" + date +"</td>");	
+										out.println("<td style='text-align:center;'>" + escapeHtml(task) +"</td>");
+										out.println("<td style='text-align:center;'>" + escapeHtml(priority) +"</td>");
+										out.println("<td style='text-align:center;'>" + escapeHtml(date) +"</td>");
 										out.println("<td>");
-										out.print("<a class = 'btn-small btn-info' style = 'float:left; cursor: pointer;' onclick = \"deleteTask('" + date + "');\"");
+										out.print("<a class = 'btn-small btn-info' style = 'float:left; cursor: pointer;' onclick = \"deleteTask('" + escapeHtml(date) + "');\"");
 										out.println(">Done</a>");
-										out.print("<a class = 'btn-small btn-primary' style = 'float:left;' method = 'post'"); 
-										out.print("href = '/inside/showEditTask.jsp?date=" + date + "'>");
+										out.print("<a class = 'btn-small btn-primary' style = 'float:left;' method = 'post'");
+										out.print("href = '/inside/showEditTask.jsp?date=" + escapeHtml(date) + "'>");
 										out.println("Edit</a>");
-										out.print("<a class = 'btn-small btn-danger' style = 'float:right; cursor: pointer;' onclick = \"deleteTask('" + date + "');\"");
+										out.print("<a class = 'btn-small btn-danger' style = 'float:right; cursor: pointer;' onclick = \"deleteTask('" + escapeHtml(date) + "');\"");
 										out.println(">Delete</a>");
 										out.println("</td>");
 										out.println("</tr>");
