@@ -3,6 +3,8 @@ package inside;
 import db.ConnectionManager;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -11,6 +13,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import util.SafeRedirect;
 
 /**
  * Servlet implementation class Edit
@@ -32,9 +35,10 @@ public class Edit extends HttpServlet {
     String task = request.getParameter("task");
     if (task == null || priority == null || task.isEmpty() || priority.isEmpty()) {
       //			System.out.println("nimei!");
-      String link = "/inside/showEditTask.jsp?date=" + date;
+      String encodedDate = URLEncoder.encode(date != null ? date : "", StandardCharsets.UTF_8.name());
+      String link = "/inside/showEditTask.jsp?date=" + encodedDate;
       //			System.out.println("the link is " + link);
-      response.sendRedirect(link);
+      SafeRedirect.redirect(response, link);
     } else {
       //			System.out.println("gan!");
 

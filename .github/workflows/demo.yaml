@@ -84,7 +84,7 @@ jobs:
   build2:
     name: Build and test using a local workflow
     uses: ./.github/workflows/use_a_local_workflow.yml@master
-    secrets: inherit
+    # secrets: inherit removed — pass only explicitly required secrets to called workflows (least privilege)
     with:
       examplearg: true
   
