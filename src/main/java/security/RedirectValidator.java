@@ -59,15 +59,16 @@ public class RedirectValidator {
      * This is useful when building redirect URLs with parameters from user input.
      *
      * @param value The parameter value to validate
-     * @return true if the value is safe (alphanumeric, hyphens, underscores, dots)
+     * @return true if the value is safe (alphanumeric, hyphens, underscores, dots, colons)
      */
     public static boolean isValidUrlParameter(String value) {
         if (value == null || value.isEmpty()) {
             return false;
         }
 
-        // Allow only alphanumeric characters, hyphens, underscores, and dots
+        // Allow only alphanumeric characters, hyphens, underscores, dots, and colons
         // This prevents injection of special characters that could break the URL
-        return value.matches("^[a-zA-Z0-9._-]+$");
+        // Colons are included to support time formats like HH:MM:SS
+        return value.matches("^[a-zA-Z0-9._:-]+$");
     }
 }
