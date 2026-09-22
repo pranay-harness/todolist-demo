@@ -7,7 +7,18 @@
 <%@page import = "java.sql.Statement" %>
 <%@page import = "db.ConnectionManager" %>
 
-
+<%!
+	// Helper method to escape HTML special characters
+	private String escapeHtml(String text) {
+		if (text == null) return "";
+		return text
+			.replace("&", "&amp;")
+			.replace("<", "&lt;")
+			.replace(">", "&gt;")
+			.replace("\"", "&quot;")
+			.replace("'", "&#39;");
+	}
+%>
 
 <!DOCTYPE html>
 <html lang="en">
@@ -92,9 +103,9 @@
 										String priority = rset.getString(2);
 										date = date.replace(' ','_');
 										out.println("<tr>");
-										out.println("<td style='text-align:center;'>" + task +"</td>");	
-										out.println("<td style='text-align:center;'>" + priority +"</td>");	
-										out.println("<td style='text-align:center;'>" + date +"</td>");								
+										out.println("<td style='text-align:center;'>" + escapeHtml(task) +"</td>");
+										out.println("<td style='text-align:center;'>" + escapeHtml(priority) +"</td>");
+										out.println("<td style='text-align:center;'>" + escapeHtml(date) +"</td>");
 										out.println("</tr>");
 									}
 									rset.close();
@@ -115,7 +126,7 @@
 						<form class = "form-inline pull-center" style = "margin-left:15px;margin-right:15px;" action = "/inside/editTask">
 						    <input type="text" class="input-xxlarge" placeholder="Task" name = "task">
 						    <input type="text" class="input-small" placeholder="Priority(1-10)" name = "priority">
-						    <%out.println("<input class='input-xlarge' name = 'date' type='text' value='" + date + "' readonly='readonly'>"); %>
+						    <%out.println("<input class='input-xlarge' name = 'date' type='text' value='" + escapeHtml(date) + "' readonly='readonly'>"); %>
 						    <br><br>
 						    <button type="submit" class="btn-block btn-large btn-success">OK</button>
 						    <a class = "btn btn-block btn-large" href = "/inside/display">Back</a>
