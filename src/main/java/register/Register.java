@@ -1,6 +1,7 @@
 package register;
 
 import db.ConnectionManager;
+import security.RedirectValidator;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -67,9 +68,19 @@ public class Register extends HttpServlet {
 
 
     if (password == null || password.isEmpty() || name == null || name.isEmpty() || !password.equals(password2)) {
-      response.sendRedirect(request.getContextPath() + "/wrongRegister.jsp");
+      String redirectUrl = request.getContextPath() + "/wrongRegister.jsp";
+      if (RedirectValidator.isValidRedirectUrl(redirectUrl)) {
+        response.sendRedirect(redirectUrl);
+      } else {
+        response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid redirect URL");
+      }
     } else if (exists) {
-      response.sendRedirect(request.getContextPath() + "/userExists.jsp");
+      String redirectUrl = request.getContextPath() + "/userExists.jsp";
+      if (RedirectValidator.isValidRedirectUrl(redirectUrl)) {
+        response.sendRedirect(redirectUrl);
+      } else {
+        response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid redirect URL");
+      }
     } else {
       try {
         Connection connection = ConnectionManager.getConnection();
@@ -87,7 +98,12 @@ public class Register extends HttpServlet {
         System.err.println("ERROR: failed to load HSQLDB JDBC driver.FUCK!");
         e.printStackTrace(System.out);
       }
-      response.sendRedirect(request.getContextPath() + "/login.jsp");
+      String redirectUrl = request.getContextPath() + "/login.jsp";
+      if (RedirectValidator.isValidRedirectUrl(redirectUrl)) {
+        response.sendRedirect(redirectUrl);
+      } else {
+        response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid redirect URL");
+      }
     }
   }
 }

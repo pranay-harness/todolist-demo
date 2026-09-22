@@ -1,6 +1,7 @@
 package login;
 
 import db.ConnectionManager;
+import security.RedirectValidator;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -29,7 +30,12 @@ public class RequestLogin extends HttpServlet {
     String remember = request.getParameter("remember");
     boolean success = false;
     if (password == null || password.isEmpty() || name == null || name.isEmpty()) {
-      response.sendRedirect(request.getContextPath() + "/loginFault.jsp");
+      String redirectUrl = request.getContextPath() + "/loginFault.jsp";
+      if (RedirectValidator.isValidRedirectUrl(redirectUrl)) {
+        response.sendRedirect(redirectUrl);
+      } else {
+        response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid redirect URL");
+      }
     } else {
       try {
 
@@ -62,9 +68,19 @@ public class RequestLogin extends HttpServlet {
           } else {
             request.getSession().setMaxInactiveInterval(86400 * 7);
           }
-          response.sendRedirect(request.getContextPath() + "/inside/display");
+          String redirectUrl = request.getContextPath() + "/inside/display";
+          if (RedirectValidator.isValidRedirectUrl(redirectUrl)) {
+            response.sendRedirect(redirectUrl);
+          } else {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid redirect URL");
+          }
         } else {
-          response.sendRedirect(request.getContextPath() + "/loginFault.jsp");
+          String redirectUrl = request.getContextPath() + "/loginFault.jsp";
+          if (RedirectValidator.isValidRedirectUrl(redirectUrl)) {
+            response.sendRedirect(redirectUrl);
+          } else {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid redirect URL");
+          }
         }
       } catch (SQLException e) {
         e.printStackTrace(System.out);

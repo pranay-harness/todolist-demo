@@ -1,6 +1,7 @@
 package inside;
 
 import db.ConnectionManager;
+import security.RedirectValidator;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -32,9 +33,18 @@ public class Edit extends HttpServlet {
     String task = request.getParameter("task");
     if (task == null || priority == null || task.isEmpty() || priority.isEmpty()) {
       //			System.out.println("nimei!");
-      String link = "/inside/showEditTask.jsp?date=" + date;
-      //			System.out.println("the link is " + link);
-      response.sendRedirect(link);
+      // Validate that the date parameter is safe before using it in the redirect URL
+      if (date != null && RedirectValidator.isValidUrlParameter(date)) {
+        String link = "/inside/showEditTask.jsp?date=" + date;
+        //			System.out.println("the link is " + link);
+        if (RedirectValidator.isValidRedirectUrl(link)) {
+          response.sendRedirect(link);
+        } else {
+          response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid redirect URL");
+        }
+      } else {
+        response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid date parameter");
+      }
     } else {
       //			System.out.println("gan!");
 
@@ -52,7 +62,12 @@ public class Edit extends HttpServlet {
         System.out.println("name is " + name);
         statement.executeUpdate();
         statement.close();
-        response.sendRedirect("/inside/display");
+        String redirectUrl = "/inside/display";
+        if (RedirectValidator.isValidRedirectUrl(redirectUrl)) {
+          response.sendRedirect(redirectUrl);
+        } else {
+          response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid redirect URL");
+        }
       } catch (SQLException e) {
         e.printStackTrace(System.out);
       }
