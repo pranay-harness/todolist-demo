@@ -74,7 +74,7 @@
 			
 			<div class = "row">
 				<div class = "span10 offset1">
-						<form  style="float:left;" class = "form-inline pull-center" action = "/inside/addTask">
+						<form  style="float:left;" class = "form-inline pull-center" action = "/inside/addTask" method = "POST">
 						    <input type="text" class="input-xlarge" placeholder="Add your task here" name = "task">
 						    <input type="text" class="input-medium" placeholder="Priority(1-10)" name = "priority">
 						    <button type="submit" class="btn-success">Add New Task</button>
