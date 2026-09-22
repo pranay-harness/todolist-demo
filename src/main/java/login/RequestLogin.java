@@ -12,6 +12,7 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 /**
  * Servlet implementation class RequestLogin
@@ -56,11 +57,15 @@ public class RequestLogin extends HttpServlet {
         resultSet.close();
         statement.close();
         if (success) {
-          request.getSession().setAttribute("name", name);
+          // Invalidate the pre-login session to prevent session fixation (CWE-384)
+          request.getSession(false).invalidate();
+          // Get a new session with a fresh session ID after invalidation
+          HttpSession newSession = request.getSession(true);
+          newSession.setAttribute("name", name);
           if (remember == null) {
-            request.getSession().setMaxInactiveInterval(1200);
+            newSession.setMaxInactiveInterval(1200);
           } else {
-            request.getSession().setMaxInactiveInterval(86400 * 7);
+            newSession.setMaxInactiveInterval(86400 * 7);
           }
           response.sendRedirect(request.getContextPath() + "/inside/display");
         } else {
