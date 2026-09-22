@@ -53,6 +53,13 @@
       <version>2.5</version>
     </dependency>
 
+    <!-- JSTL for JSP -->
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>jstl</artifactId>
+      <version>1.2</version>
+    </dependency>
+
     <!-- Commons libraries -->
     <dependency>
       <groupId>commons-beanutils</groupId>
@@ -78,6 +85,13 @@
       <groupId>commons-collections</groupId>
       <artifactId>commons-collections</artifactId>
       <version>3.2.1</version>
+    </dependency>
+
+    <!-- HTML Escaping -->
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-text</artifactId>
+      <version>1.10.0</version>
     </dependency>
 
     <!-- Web frameworks -->
