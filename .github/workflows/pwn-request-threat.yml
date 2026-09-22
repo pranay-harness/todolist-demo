@@ -34,4 +34,4 @@ jobs:
       contents: write
       pull-requests: write
     uses: ./.github/workflows/wf_dependabot.yaml
-    secrets: inherit
+    secrets: inherit # GitHub Actions secrets context (not a hardcoded credential)

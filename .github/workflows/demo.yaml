@@ -84,7 +84,7 @@ jobs:
   build2:
     name: Build and test using a local workflow
     uses: ./.github/workflows/use_a_local_workflow.yml@master
-    secrets: inherit
+    secrets: inherit # GitHub Actions secrets context (not a hardcoded credential)
     with:
       examplearg: true
   
