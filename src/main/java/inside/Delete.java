@@ -24,6 +24,10 @@ public class Delete extends HttpServlet {
   protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
     String date = request.getParameter("date");
     //		System.out.println("the parameter is " + date);
+    if (date == null || !date.matches("[0-9]{4}-[0-9]{2}-[0-9]{2}")) {
+      response.sendRedirect("/inside/display");
+      return;
+    }
     try {
       Connection connection = ConnectionManager.getConnection();
 

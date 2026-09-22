@@ -30,9 +30,13 @@ public class Edit extends HttpServlet {
     //		System.out.println("the name is " + date);
     String priority = request.getParameter("priority");
     String task = request.getParameter("task");
-    if (task == null || priority == null || task.isEmpty() || priority.isEmpty()) {
+    if (task == null || priority == null || task.isEmpty() || priority.isEmpty()
+        || date == null || !date.matches("[0-9]{4}-[0-9]{2}-[0-9]{2}")) {
       //			System.out.println("nimei!");
-      String link = "/inside/showEditTask.jsp?date=" + date;
+      // Validate date to prevent open redirect via CRLF injection (CWE-601).
+      // Only allow a strict date format (YYYY-MM-DD) before embedding in the redirect URL.
+      String safeDate = (date != null && date.matches("[0-9]{4}-[0-9]{2}-[0-9]{2}")) ? date : "";
+      String link = "/inside/showEditTask.jsp?date=" + safeDate;
       //			System.out.println("the link is " + link);
       response.sendRedirect(link);
     } else {
@@ -46,10 +50,6 @@ public class Edit extends HttpServlet {
         statement.setString(2, priority);
         statement.setString(3, date);
         statement.setString(4, name);
-        System.out.println("task is " + task);
-        System.out.println("p is " + priority);
-        System.out.println("time is " + date);
-        System.out.println("name is " + name);
         statement.executeUpdate();
         statement.close();
         response.sendRedirect("/inside/display");
