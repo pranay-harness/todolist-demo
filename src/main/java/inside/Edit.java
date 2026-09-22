@@ -11,6 +11,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import util.SafeRedirect;
 
 /**
  * Servlet implementation class Edit
@@ -32,7 +33,7 @@ public class Edit extends HttpServlet {
     String task = request.getParameter("task");
     if (task == null || priority == null || task.isEmpty() || priority.isEmpty()) {
       //			System.out.println("nimei!");
-      String link = "/inside/showEditTask.jsp?date=" + date;
+      String link = SafeRedirect.internalUrl(request, "/inside/showEditTask.jsp", "date", date);
       //			System.out.println("the link is " + link);
       response.sendRedirect(link);
     } else {
