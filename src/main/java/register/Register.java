@@ -1,6 +1,7 @@
 package register;
 
 import db.ConnectionManager;
+import util.PasswordUtil;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -25,7 +26,7 @@ public class Register extends HttpServlet {
     try {
       Connection connection = ConnectionManager.getConnection();
       Statement statement = connection.createStatement();
-      statement.executeUpdate("create table accounts (name varchar(32)," + " password varchar(32))");
+      statement.executeUpdate("create table accounts (name varchar(32), password varchar(255), salt varchar(255))");
       statement
           .executeUpdate("create table task (name varchar(32)," + " thing varchar(60), priority integer, createDate varchar(80),primary key (createDate))");
       statement.close();
@@ -73,10 +74,13 @@ public class Register extends HttpServlet {
     } else {
       try {
         Connection connection = ConnectionManager.getConnection();
-        PreparedStatement statement = connection.prepareStatement("insert into accounts(name,password) values(?, ?)");
+        String salt = PasswordUtil.generateSalt();
+        String hashedPassword = PasswordUtil.hashPassword(password, salt);
+        PreparedStatement statement = connection.prepareStatement("insert into accounts(name,password,salt) values(?, ?, ?)");
 
         statement.setString(1, name);
-        statement.setString(2, password);
+        statement.setString(2, hashedPassword);
+        statement.setString(3, salt);
 
         statement.executeUpdate();
 

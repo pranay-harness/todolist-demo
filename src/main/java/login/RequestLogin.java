@@ -1,6 +1,7 @@
 package login;
 
 import db.ConnectionManager;
+import util.PasswordUtil;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -42,13 +43,15 @@ public class RequestLogin extends HttpServlet {
 
         //				System.out.println("WTF?");
 
-        ResultSet resultSet = statement.executeQuery("select name, password from accounts");
+        ResultSet resultSet = statement.executeQuery("select name, password, salt from accounts");
 
         //				System.out.println("nima");
 
         while (resultSet.next()) {
           if (resultSet.getString(1).equals(name)) {
-            if (resultSet.getString(2).equals(password)) {
+            String storedHash = resultSet.getString(2);
+            String salt = resultSet.getString(3);
+            if (PasswordUtil.verifyPassword(password, storedHash, salt)) {
               success = true;
               break;
             }
