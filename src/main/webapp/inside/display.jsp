@@ -41,6 +41,20 @@
 	</head>
 	
 	<body>
+	    <script>
+	        function deleteTask(date) {
+	            var form = document.createElement("form");
+	            form.method = "POST";
+	            form.action = "/inside/deleteTask";
+	            var dateInput = document.createElement("input");
+	            dateInput.type = "hidden";
+	            dateInput.name = "date";
+	            dateInput.value = date;
+	            form.appendChild(dateInput);
+	            document.body.appendChild(form);
+	            form.submit();
+	        }
+	    </script>
 	    <div class="navbar navbar-inverse navbar-fixed-top">
 	      <div class="navbar-inner">
 	        <div class="container-fluid">
@@ -143,15 +157,13 @@
 											out.println("<td style='text-align:center;'>" + escapeHtml(priority) +"</td>");
 											out.println("<td style='text-align:center;'>" + escapeHtml(date) +"</td>");
 											out.println("<td>");
-											out.print("<a class = 'btn-small btn-info' style = 'float:left;' method = 'post'");
-											out.print("href = '/inside/deleteTask?date=" + escapeHtml(date) + "'>");
-											out.println("Done</a>");
+											out.print("<a class = 'btn-small btn-info' style = 'float:left; cursor: pointer;' onclick = \"deleteTask('" + escapeHtml(date) + "');\"");
+											out.println(">Done</a>");
 											out.print("<a class = 'btn-small btn-primary' style = 'float:left;' method = 'post'");
 											out.print("href = '/inside/showEditTask.jsp?date=" + escapeHtml(date) + "'>");
 											out.println("Edit</a>");
-											out.print("<a class = 'btn-small btn-danger' style = 'float:right;' method = 'post'");
-											out.print("href = '/inside/deleteTask?date=" + escapeHtml(date) + "'>");
-											out.println("Delete</a>");
+											out.print("<a class = 'btn-small btn-danger' style = 'float:right; cursor: pointer;' onclick = \"deleteTask('" + escapeHtml(date) + "');\"");
+											out.println(">Delete</a>");
 											out.println("</td>");
 											out.println("</tr>");
 										}

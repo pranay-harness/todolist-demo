@@ -19,9 +19,9 @@ public class Delete extends HttpServlet {
   private static final long serialVersionUID = 1L;
 
   /**
-   * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
+   * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
    */
-  protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+  protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
     String date = request.getParameter("date");
     //		System.out.println("the parameter is " + date);
     String name = (String) request.getSession(false).getAttribute("name");
