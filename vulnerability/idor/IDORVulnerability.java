@@ -77,8 +77,12 @@ public class IDORVulnerability {
         String actualToken = cookieToken;
         try {
             if (actualToken != null) {
-                idorLoginService.decodeToken(actualToken);
+                User decodedUser = idorLoginService.decodeToken(actualToken);
                 if (id != null) {
+                    // Verify the current user has permission to access the requested user
+                    if (decodedUser.getUserId() != id && !ROLE_ADMIN.equalsIgnoreCase(decodedUser.getRole())) {
+                        return response(ACCESS_DENIED_INSUFFICIENT, false);
+                    }
                     User profile = fetchUserById(id);
                     if (profile == null) {
                         return response(USER_NOT_FOUND, false);
@@ -116,7 +120,13 @@ public class IDORVulnerability {
         String actualToken = cookieToken;
         try {
             if (actualToken != null && loggedInUser != null) {
-                idorLoginService.decodeToken(actualToken);
+                User decodedUser = idorLoginService.decodeToken(actualToken);
+                // Use user ID from the verified token, not from the cookie which can be tampered
+                int tokenUserId = decodedUser.getUserId();
+                // Verify the requested user ID matches the token user or user is admin
+                if (tokenUserId != loggedInUser && !ROLE_ADMIN.equalsIgnoreCase(decodedUser.getRole())) {
+                    return response(ACCESS_DENIED_INSUFFICIENT, false);
+                }
                 User profile = fetchUserById(loggedInUser);
                 if (profile == null) {
                     return response(USER_NOT_FOUND, false);
@@ -155,7 +165,8 @@ public class IDORVulnerability {
             if (actualToken != null) {
                 User decodedUser = idorLoginService.decodeToken(actualToken);
                 int tokenUserId = decodedUser.getUserId();
-                String role = cookieRole != null ? cookieRole : decodedUser.getRole();
+                // Always use the role from the verified token, not from the tamper-able cookie
+                String role = decodedUser.getRole();
 
                 if (id == null) {
                     id = tokenUserId;
@@ -204,7 +215,8 @@ public class IDORVulnerability {
             if (actualToken != null) {
                 User decodedUser = idorLoginService.decodeToken(actualToken);
                 int tokenUserId = decodedUser.getUserId();
-                String role = cookieRole != null ? decodeBase64(cookieRole) : decodedUser.getRole();
+                // Always use the role from the verified token, ignoring the base64-encoded cookie
+                String role = decodedUser.getRole();
 
                 if (id == null) {
                     id = tokenUserId;
