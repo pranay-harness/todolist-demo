@@ -10,6 +10,7 @@ import { BasketModel } from '../models/basket'
 import { UserModel } from '../models/user'
 import challengeUtils = require('../lib/challengeUtils')
 import config from 'config'
+import * as escapeHtml from 'escape-html'
 
 import * as utils from '../lib/utils'
 const security = require('../lib/insecurity')
@@ -49,7 +50,7 @@ module.exports = function login () {
         } else if (user.data?.id) {
           afterLogin(user, res, next)
         } else {
-          res.status(401).send(res.__('Invalid email or password.'))
+          res.status(401).send(escapeHtml(res.__('Invalid email or password.')))
         }
       }).catch((error: Error) => {
         next(error)
@@ -74,7 +75,7 @@ module.exports = function login () {
         } else if (user.data?.id) {
           afterLogin(user, res, next)
         } else {
-          res.status(401).send(res.__('Invalid email or password.'))
+          res.status(401).send(escapeHtml(res.__('Invalid email or password.')))
         }
       }).catch((error: Error) => {
         next(error)
