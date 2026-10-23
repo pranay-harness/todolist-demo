@@ -1,0 +1,22 @@
+name: PHP CI
+
+on:
+  push:
+    paths:
+      - 'php-app/**'
+  pull_request:
+    paths:
+      - 'php-app/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: php-app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+      - run: composer test

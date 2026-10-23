@@ -1,0 +1,12 @@
+{
+    "name": "pranay-harness/todolist-php",
+    "description": "PHP companion app for the To-Do List demo (test fixture, not deployed)",
+    "type": "project",
+    "require": {
+        "php": "^8.3",
+        "ext-pdo": "*"
+    },
+    "scripts": {
+        "test": "php -l public/index.php"
+    }
+}
