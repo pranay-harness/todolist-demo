@@ -6,6 +6,8 @@
 <%@page import = "java.sql.SQLException" %>
 <%@page import = "java.sql.Statement" %>
 <%@page import = "db.ConnectionManager" %>
+<%@page import = "org.apache.commons.text.StringEscapeUtils" %>
+<%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 
 
 
@@ -55,7 +57,8 @@
 			<div class = "row">
 					<div class = "span8 offset2">
 											
-						<%String name = (String)session.getAttribute("name");%>
+						<%String name = (String)session.getAttribute("name");
+						  name = StringEscapeUtils.escapeHtml4(name);%>
 						<%out.println("<div class=\"page-header text-center\"><h1>"
 						+ name + "'s Harness Sample To-Do List</h1></div>");%>
 				
@@ -91,10 +94,13 @@
 										String task = rset.getString(1);
 										String priority = rset.getString(2);
 										date = date.replace(' ','_');
+										String escapedTask = StringEscapeUtils.escapeHtml4(task);
+										String escapedPriority = StringEscapeUtils.escapeHtml4(priority);
+										String escapedDate = StringEscapeUtils.escapeHtml4(date);
 										out.println("<tr>");
-										out.println("<td style='text-align:center;'>" + task +"</td>");	
-										out.println("<td style='text-align:center;'>" + priority +"</td>");	
-										out.println("<td style='text-align:center;'>" + date +"</td>");								
+										out.println("<td style='text-align:center;'>" + escapedTask +"</td>");
+										out.println("<td style='text-align:center;'>" + escapedPriority +"</td>");
+										out.println("<td style='text-align:center;'>" + escapedDate +"</td>");
 										out.println("</tr>");
 									}
 									rset.close();
@@ -115,7 +121,7 @@
 						<form class = "form-inline pull-center" style = "margin-left:15px;margin-right:15px;" action = "/inside/editTask">
 						    <input type="text" class="input-xxlarge" placeholder="Task" name = "task">
 						    <input type="text" class="input-small" placeholder="Priority(1-10)" name = "priority">
-						    <%out.println("<input class='input-xlarge' name = 'date' type='text' value='" + date + "' readonly='readonly'>"); %>
+						    <%out.println("<input class='input-xlarge' name = 'date' type='text' value='" + StringEscapeUtils.escapeHtml4(date) + "' readonly='readonly'>"); %>
 						    <br><br>
 						    <button type="submit" class="btn-block btn-large btn-success">OK</button>
 						    <a class = "btn btn-block btn-large" href = "/inside/display">Back</a>
