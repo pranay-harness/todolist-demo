@@ -1,12 +1,13 @@
 package login;
 
 import db.ConnectionManager;
+import validation.RequestParameters;
 
 import java.io.IOException;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -28,7 +29,12 @@ public class RequestLogin extends HttpServlet {
     String password = request.getParameter("password");
     String remember = request.getParameter("remember");
     boolean success = false;
-    if (password == null || password.isEmpty() || name == null || name.isEmpty()) {
+    // Validate every untrusted parameter at the trust boundary before it reaches the database;
+    // anything that does not have the expected shape fails closed to the login fault page, exactly
+    // as a missing name or password already did.
+    if (!RequestParameters.isValidName(name)
+        || !RequestParameters.isValidPassword(password)
+        || !RequestParameters.isAbsentOrValidFlag(remember)) {
       response.sendRedirect(request.getContextPath() + "/loginFault.jsp");
     } else {
       try {
@@ -37,26 +43,30 @@ public class RequestLogin extends HttpServlet {
 
         //				System.out.println("connection done");
 
-        Statement statement = connection.createStatement();
+        PreparedStatement statement = connection.prepareStatement("select name, password from accounts where name = ?");
 
         //				System.out.println("WTF?");
 
-        ResultSet resultSet = statement.executeQuery("select name, password from accounts");
+        statement.setString(1, name);
+
+        ResultSet resultSet = statement.executeQuery();
 
         //				System.out.println("nima");
 
+        // Identity confirmed by the database lookup, never the raw request parameter.
+        String authenticatedName = null;
+
         while (resultSet.next()) {
-          if (resultSet.getString(1).equals(name)) {
-            if (resultSet.getString(2).equals(password)) {
-              success = true;
-              break;
-            }
+          if (resultSet.getString(2).equals(password)) {
+            authenticatedName = resultSet.getString(1);
+            success = authenticatedName != null && !authenticatedName.isEmpty();
+            break;
           }
         }
         resultSet.close();
         statement.close();
         if (success) {
-          request.getSession().setAttribute("name", name);
+          request.getSession().setAttribute("name", authenticatedName);
           if (remember == null) {
             request.getSession().setMaxInactiveInterval(1200);
           } else {
