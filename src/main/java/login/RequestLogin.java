@@ -12,6 +12,7 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import util.SafeRedirect;
 
 /**
  * Servlet implementation class RequestLogin
@@ -29,7 +30,7 @@ public class RequestLogin extends HttpServlet {
     String remember = request.getParameter("remember");
     boolean success = false;
     if (password == null || password.isEmpty() || name == null || name.isEmpty()) {
-      response.sendRedirect(request.getContextPath() + "/loginFault.jsp");
+      SafeRedirect.redirect(response, request.getContextPath() + "/loginFault.jsp");
     } else {
       try {
 
@@ -62,9 +63,9 @@ public class RequestLogin extends HttpServlet {
           } else {
             request.getSession().setMaxInactiveInterval(86400 * 7);
           }
-          response.sendRedirect(request.getContextPath() + "/inside/display");
+          SafeRedirect.redirect(response, request.getContextPath() + "/inside/display");
         } else {
-          response.sendRedirect(request.getContextPath() + "/loginFault.jsp");
+          SafeRedirect.redirect(response, request.getContextPath() + "/loginFault.jsp");
         }
       } catch (SQLException e) {
         e.printStackTrace(System.out);
