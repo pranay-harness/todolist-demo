@@ -4,9 +4,9 @@ import db.ConnectionManager;
 
 import java.io.IOException;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -37,26 +37,26 @@ public class RequestLogin extends HttpServlet {
 
         //				System.out.println("connection done");
 
-        Statement statement = connection.createStatement();
+        PreparedStatement statement = connection.prepareStatement(
+            "select name, password from accounts where name = ? and password = ?");
+        statement.setString(1, name);
+        statement.setString(2, password);
 
         //				System.out.println("WTF?");
 
-        ResultSet resultSet = statement.executeQuery("select name, password from accounts");
+        ResultSet resultSet = statement.executeQuery();
 
         //				System.out.println("nima");
 
-        while (resultSet.next()) {
-          if (resultSet.getString(1).equals(name)) {
-            if (resultSet.getString(2).equals(password)) {
-              success = true;
-              break;
-            }
-          }
+        String authenticatedName = null;
+        if (resultSet.next()) {
+          success = true;
+          authenticatedName = resultSet.getString("name");
         }
         resultSet.close();
         statement.close();
         if (success) {
-          request.getSession().setAttribute("name", name);
+          request.getSession().setAttribute("name", authenticatedName);
           if (remember == null) {
             request.getSession().setMaxInactiveInterval(1200);
           } else {
