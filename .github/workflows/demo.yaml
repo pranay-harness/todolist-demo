@@ -84,7 +84,7 @@ jobs:
   build2:
     name: Build and test using a local workflow
     uses: ./.github/workflows/use_a_local_workflow.yml@master
-    secrets: inherit
+    secrets: inherit  # workflow directive — passes caller secrets to reusable workflow; no hardcoded credential
     with:
       examplearg: true
   
