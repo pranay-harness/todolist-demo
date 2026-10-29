@@ -1,0 +1,134 @@
+# Validates every PR (including Devin's devin/vuln-* PRs):
+#   1. Rescan base and head with the same scanners; fail on newly introduced HIGH/CRITICAL
+#   2. Regression suite on base and head; fail on new test failures
+#   3. Breaking-change analysis (japicmp) for every dependency version bumped in pom.xml
+#   4. One sticky PR comment with the verdict
+#
+# Make "Vuln PR verdict" a required status check on main (docs/VULN_PIPELINE.md).
+name: Vuln PR Validate
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vuln-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  rescan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Scan base and PR head
+        run: |
+          git worktree add /tmp/base "${{ github.event.pull_request.base.sha }}"
+          scripts/vuln/scan.sh /tmp/base reports/base
+          scripts/vuln/scan.sh . reports/head
+
+      - name: Compare
+        id: compare
+        run: |
+          set +e
+          python3 scripts/vuln/vulnctl.py compare --base reports/base/findings.json \
+            --head reports/head/findings.json --out reports/rescan.md --fail-on HIGH
+          echo "status=$?" >> "$GITHUB_OUTPUT"
+          cat reports/rescan.md >> "$GITHUB_STEP_SUMMARY"
+
+      # PR-scoped code scanning results: GitHub annotates the alerts this PR adds or fixes.
+      - name: Upload Trivy SARIF
+        if: always() && hashFiles('reports/head/trivy.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v3
+        continue-on-error: true
+        with:
+          sarif_file: reports/head/trivy.sarif
+          category: trivy
+      - name: Upload Semgrep SARIF
+        if: always() && hashFiles('reports/head/semgrep.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v3
+        continue-on-error: true
+        with:
+          sarif_file: reports/head/semgrep.sarif
+          category: semgrep
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: rescan
+          path: reports/
+
+      - name: Gate
+        run: '[ "${{ steps.compare.outputs.status }}" = 0 ]'
+
+  regression:
+    uses: ./.github/workflows/regression.yml
+    with:
+      base_ref: ${{ github.event.pull_request.base.sha }}
+
+  verdict:
+    name: Vuln PR verdict
+    needs: [rescan, regression]
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: art
+          pattern: "{rescan,regression-report,breaking-changes}"
+
+      - name: Build report
+        id: report
+        run: |
+          rescan="${{ needs.rescan.result }}"
+          regression="${{ needs.regression.result }}"
+          icon() { [ "$1" = success ] && echo "✅" || echo "❌"; }
+          {
+            echo "<!-- vuln-pr-validate -->"
+            echo "## 🛡️ Vulnerability PR validation"
+            echo ""
+            echo "| Check | Result |"
+            echo "|---|---|"
+            echo "| Rescan (no new HIGH/CRITICAL) | $(icon "$rescan") $rescan |"
+            echo "| Regression (no new test failures) | $(icon "$regression") $regression |"
+            echo ""
+            cat art/rescan/rescan.md 2>/dev/null || echo "_Rescan report missing._"
+            echo ""
+            cat art/regression-report/regression.md 2>/dev/null || echo "_Regression report missing._"
+            echo ""
+            cat art/breaking-changes/summary.md 2>/dev/null || true
+            echo ""
+            echo "_[Workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) · reports attached as artifacts._"
+          } > comment.md
+          cat comment.md >> "$GITHUB_STEP_SUMMARY"
+          ok=$([ "$rescan" = success ] && [ "$regression" = success ] && echo true || echo false)
+          echo "ok=$ok" >> "$GITHUB_OUTPUT"
+
+      - name: Post sticky PR comment
+        continue-on-error: true # read-only token on fork PRs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          id=$(gh api "repos/$REPO/issues/$PR/comments" --paginate \
+            --jq '[.[] | select(.body | startswith("<!-- vuln-pr-validate -->")) | .id] | first // empty' | head -n1)
+          if [ -n "$id" ]; then
+            gh api -X PATCH "repos/$REPO/issues/comments/$id" -F body=@comment.md >/dev/null
+          else
+            gh api -X POST "repos/$REPO/issues/$PR/comments" -F body=@comment.md >/dev/null
+          fi
+
+      - name: Verdict
+        run: '[ "${{ steps.report.outputs.ok }}" = true ]'
