@@ -77,9 +77,22 @@ public class IDORVulnerability {
         String actualToken = cookieToken;
         try {
             if (actualToken != null) {
-                idorLoginService.decodeToken(actualToken);
+                User decodedUser = idorLoginService.decodeToken(actualToken);
+                if (decodedUser == null) {
+                    // Fail closed: no caller identity means no object level authorization.
+                    return response(INVALID_TOKEN, false);
+                }
+                int tokenUserId = decodedUser.getUserId();
+
                 if (id != null) {
-                    User profile = fetchUserById(id);
+                    // Object level access control: the identifier supplied by the request is
+                    // only honoured when it refers to the authenticated caller's own record.
+                    if (!isOwner(tokenUserId, id)) {
+                        return response(ACCESS_DENIED_INSUFFICIENT, false);
+                    }
+                    // The lookup uses the identity resolved from the token, never the
+                    // request supplied reference.
+                    User profile = fetchUserById(tokenUserId);
                     if (profile == null) {
                         return response(USER_NOT_FOUND, false);
                     }
@@ -92,6 +105,15 @@ public class IDORVulnerability {
         } catch (Exception exception) {
             return response(INVALID_TOKEN, false);
         }
+    }
+
+    /**
+     * Ownership check for a request supplied object reference. Returns {@code true} only when the
+     * reference belongs to the authenticated caller, so an unresolvable or foreign reference is
+     * denied instead of being trusted.
+     */
+    private boolean isOwner(int authenticatedUserId, Integer requestedUserId) {
+        return requestedUserId != null && authenticatedUserId == requestedUserId.intValue();
     }
 
     @ChallengeCard(
