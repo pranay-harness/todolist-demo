@@ -26,7 +26,7 @@ public class AddTask extends HttpServlet {
     String pri = request.getParameter("priority");
     int priority;
 
-    if (task.isEmpty() || !pri.matches("[1-9][0-9]*"))
+    if (task == null || task.isEmpty() || pri == null || !pri.matches("[1-9][0-9]*"))
       response.sendRedirect("/inside/display");
     else {
       priority = Integer.parseInt(pri);

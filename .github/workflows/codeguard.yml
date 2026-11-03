@@ -9,15 +9,15 @@ jobs:
   governance:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - uses: DNYoussef/codeguard-action@v1
+      - uses: DNYoussef/codeguard-action@9147821fafaf7b290abc0cf645a7c591f9da684c # v1
         id: guard
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           openai_api_key: ${{ secrets.OPENAI_API_KEY }}
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
           name: evidence-bundle-${{ github.event.pull_request.number }}

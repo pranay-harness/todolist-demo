@@ -16,7 +16,14 @@ public class ConnectionManager {
       throw new RuntimeException(e);
     }
     try {
-      connection = DriverManager.getConnection("jdbc:h2:mem:list;MODE=MYSQL", "sa", "");
+      // Password must be supplied via the DB_PASSWORD environment variable or the
+      // db.password system property. The credential has been removed from source
+      // control and MUST be rotated (revoked/reissued) because it existed in git history.
+      String dbPassword = System.getenv("DB_PASSWORD");
+      if (dbPassword == null) {
+        dbPassword = System.getProperty("db.password", "");
+      }
+      connection = DriverManager.getConnection("jdbc:h2:mem:list;MODE=MYSQL", "sa", dbPassword);
     } catch (SQLException e) {
       throw new RuntimeException(e);
     }
