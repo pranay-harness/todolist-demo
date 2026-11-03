@@ -16,7 +16,7 @@ public class ConnectionManager {
       throw new RuntimeException(e);
     }
     try {
-      connection = DriverManager.getConnection("jdbc:h2:mem:list;MODE=MYSQL", "sa", "");
+      connection = DriverManager.getConnection("jdbc:h2:mem:list;MODE=MYSQL", "sa", ""); // H2 demo database with default credentials
     } catch (SQLException e) {
       throw new RuntimeException(e);
     }
