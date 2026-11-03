@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Plain Maven Central, bypassing any corporate mirror in ~/.m2/settings.xml.
+     Usage: MAVEN_ARGS="-s scripts/vuln/maven-central-settings.xml" scripts/vuln/regression.sh -->
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"/>

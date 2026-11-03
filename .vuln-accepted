@@ -1,0 +1,6 @@
+# Accepted risk for the vulnerability pipeline (scripts/vuln/vulnctl.py).
+# One entry per line: <path prefix | rule id | CVE id>  # reason
+# Matching findings are still reported, but never auto-remediated or gated.
+vulnerability/        # intentional vulnerable samples for scanner demos
+idor-vuln.java        # intentional IDOR sample for scanner demos
+php-app/              # PHP2Shell test fixture; patched via fix-php-vuln skill, never deployed
