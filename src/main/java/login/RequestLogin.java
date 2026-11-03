@@ -1,6 +1,8 @@
 package login;
 
 import db.ConnectionManager;
+import util.Passwords;
+import util.Usernames;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -28,7 +30,10 @@ public class RequestLogin extends HttpServlet {
     String password = request.getParameter("password");
     String remember = request.getParameter("remember");
     boolean success = false;
-    if (password == null || password.isEmpty() || name == null || name.isEmpty()) {
+    // The submitted name is untrusted input and must be validated before it is used to
+    // authenticate: an unchecked parameter placed in the session would mix untrusted data
+    // into a trusted structure (CWE-501). Fails closed - an unexpected name never logs in.
+    if (password == null || password.isEmpty() || !Usernames.isValid(name)) {
       response.sendRedirect(request.getContextPath() + "/loginFault.jsp");
     } else {
       try {
@@ -45,9 +50,17 @@ public class RequestLogin extends HttpServlet {
 
         //				System.out.println("nima");
 
+        String authenticatedName = null;
+
         while (resultSet.next()) {
-          if (resultSet.getString(1).equals(name)) {
-            if (resultSet.getString(2).equals(password)) {
+          String accountName = resultSet.getString(1);
+          if (accountName.equals(name)) {
+            // Constant-time comparison: String.equals leaks how many leading characters
+            // matched through its running time (CWE-208).
+            if (Passwords.matches(password, resultSet.getString(2))) {
+              // Keep the name as held by the account record: that is the value the
+              // application itself resolved and authenticated, not the raw parameter.
+              authenticatedName = accountName;
               success = true;
               break;
             }
@@ -55,8 +68,9 @@ public class RequestLogin extends HttpServlet {
         }
         resultSet.close();
         statement.close();
-        if (success) {
-          request.getSession().setAttribute("name", name);
+        if (success && Usernames.isValid(authenticatedName)) {
+          // Only the validated, application-resolved account name crosses into the session.
+          request.getSession().setAttribute("name", authenticatedName);
           if (remember == null) {
             request.getSession().setMaxInactiveInterval(1200);
           } else {
