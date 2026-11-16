@@ -10,6 +10,7 @@ import { BasketModel } from '../models/basket'
 import { UserModel } from '../models/user'
 import challengeUtils = require('../lib/challengeUtils')
 import config from 'config'
+import crypto = require('crypto')
 
 import * as utils from '../lib/utils'
 const security = require('../lib/insecurity')
@@ -81,13 +82,27 @@ module.exports = function login () {
       })
   }
 
+  // Challenge passwords are supplied at runtime via environment variables (never committed to git).
+  // Fail closed: when a variable is unset or empty the corresponding challenge cannot be solved.
+  // The previously committed values are in git history and must be treated as compromised/rotated.
+  function passwordMatchesEnv (req: Request, envName: string): boolean {
+    const expected = process.env[envName]
+    const supplied = req.body.password
+    if (!expected || typeof supplied !== 'string') {
+      return false
+    }
+    const expectedBuf = Buffer.from(expected)
+    const suppliedBuf = Buffer.from(supplied)
+    return expectedBuf.length === suppliedBuf.length && crypto.timingSafeEqual(expectedBuf, suppliedBuf)
+  }
+
   function verifyPreLoginChallenges (req: Request) {
-    challengeUtils.solveIf(challenges.weakPasswordChallenge, () => { return req.body.email === 'admin@' + config.get('application.domain') && req.body.password === 'admin123' })
-    challengeUtils.solveIf(challenges.loginSupportChallenge, () => { return req.body.email === 'support@' + config.get('application.domain') && req.body.password === 'J6aVjTgOpRs@?5l!Zkq2AYnCE@RF$P' })
-    challengeUtils.solveIf(challenges.loginRapperChallenge, () => { return req.body.email === 'mc.safesearch@' + config.get('application.domain') && req.body.password === 'Mr. N00dles' })
-    challengeUtils.solveIf(challenges.loginAmyChallenge, () => { return req.body.email === 'amy@' + config.get('application.domain') && req.body.password === 'K1f.....................' })
-    challengeUtils.solveIf(challenges.dlpPasswordSprayingChallenge, () => { return req.body.email === 'J12934@' + config.get('application.domain') && req.body.password === '0Y8rMnww$*9VFYE§59-!Fg1L6t&6lB' })
-    challengeUtils.solveIf(challenges.oauthUserPasswordChallenge, () => { return req.body.email === 'bjoern.kimminich@gmail.com' && req.body.password === 'bW9jLmxpYW1nQGhjaW5pbW1pay5ucmVvamI=' })
+    challengeUtils.solveIf(challenges.weakPasswordChallenge, () => { return req.body.email === 'admin@' + config.get('application.domain') && passwordMatchesEnv(req, 'CHALLENGE_ADMIN_PASSWORD') })
+    challengeUtils.solveIf(challenges.loginSupportChallenge, () => { return req.body.email === 'support@' + config.get('application.domain') && passwordMatchesEnv(req, 'CHALLENGE_SUPPORT_PASSWORD') })
+    challengeUtils.solveIf(challenges.loginRapperChallenge, () => { return req.body.email === 'mc.safesearch@' + config.get('application.domain') && passwordMatchesEnv(req, 'CHALLENGE_RAPPER_PASSWORD') })
+    challengeUtils.solveIf(challenges.loginAmyChallenge, () => { return req.body.email === 'amy@' + config.get('application.domain') && passwordMatchesEnv(req, 'CHALLENGE_AMY_PASSWORD') })
+    challengeUtils.solveIf(challenges.dlpPasswordSprayingChallenge, () => { return req.body.email === 'J12934@' + config.get('application.domain') && passwordMatchesEnv(req, 'CHALLENGE_DLP_PASSWORD') })
+    challengeUtils.solveIf(challenges.oauthUserPasswordChallenge, () => { return req.body.email === 'bjoern.kimminich@gmail.com' && passwordMatchesEnv(req, 'CHALLENGE_OAUTH_USER_PASSWORD') })
   }
 
   function verifyPostLoginChallenges (user: { data: User }) {
