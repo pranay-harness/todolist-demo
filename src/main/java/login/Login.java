@@ -1,6 +1,7 @@
 package login;
 
 import java.io.IOException;
+import util.SafeRedirect;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -14,6 +15,6 @@ public class Login extends HttpServlet {
   private static final long serialVersionUID = 1L;
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-    response.sendRedirect(request.getContextPath() + "/login.jsp");
+    SafeRedirect.toAppPath(request, response, "/login.jsp");
   }
 }
