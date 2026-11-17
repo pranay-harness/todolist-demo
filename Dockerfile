@@ -3,10 +3,10 @@
 FROM maven:3.9-eclipse-temurin-8 AS build
 WORKDIR /app
 
-# Resolve dependencies first so this layer is cached when only source changes
+# No dependency:go-offline step: it resolves every transitive descriptor,
+# including webwork -> tiles-core 0.2-SNAPSHOT, which only exists in old
+# plain-HTTP repos that Maven 3.8+ blocks. "package" only needs what it uses.
 COPY pom.xml .
-RUN mvn -q -B dependency:go-offline
-
 COPY src ./src
 RUN mvn -q -B clean package -DskipTests
 
