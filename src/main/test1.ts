@@ -49,7 +49,7 @@ module.exports = function login () {
         } else if (user.data?.id) {
           afterLogin(user, res, next)
         } else {
-          res.status(401).send(res.__('Invalid email or password.'))
+          res.status(401).json({ error: res.__('Invalid email or password.') })
         }
       }).catch((error: Error) => {
         next(error)
@@ -74,7 +74,7 @@ module.exports = function login () {
         } else if (user.data?.id) {
           afterLogin(user, res, next)
         } else {
-          res.status(401).send(res.__('Invalid email or password.'))
+          res.status(401).json({ error: res.__('Invalid email or password.') })
         }
       }).catch((error: Error) => {
         next(error)
