@@ -33,8 +33,14 @@ public class Edit extends HttpServlet {
     String task = request.getParameter("task");
     if (task == null || priority == null || task.isEmpty() || priority.isEmpty()) {
       //			System.out.println("nimei!");
-      // URL-encode the user-supplied date value to prevent CRLF injection; the base path is constant.
-      String link = "/inside/showEditTask.jsp?date=" + RedirectUtil.encodeParam(date);
+      // Validate date against a strict allowlist (YYYY-MM-DD: digits and hyphens only) before
+      // using it in the redirect URL, preventing open redirect via attacker-controlled input.
+      if (date == null || !date.matches("^[0-9]{4}-[0-9]{2}-[0-9]{2}$")) {
+        response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid date parameter");
+        return;
+      }
+      // date is now allowlist-validated and contains only digits and hyphens — safe for URL.
+      String link = "/inside/showEditTask.jsp?date=" + date;
       //			System.out.println("the link is " + link);
       RedirectUtil.safeRedirect(request, response, link);
     } else {
