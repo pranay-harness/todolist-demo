@@ -1,7 +1,11 @@
 package org.sasanlabs.service.vulnerability.idor;
 
+import java.util.Arrays;
 import java.util.Base64;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import org.sasanlabs.internal.utility.LevelConstants;
 import org.sasanlabs.internal.utility.Variant;
 import org.sasanlabs.internal.utility.annotations.AttackVector;
@@ -40,6 +44,10 @@ public class IDORVulnerability {
     private static final String COOKIE_TOKEN_LEVEL_3 = "token_level3";
     private static final String COOKIE_TOKEN_LEVEL_4 = "token_level4";
     private static final String COOKIE_TOKEN_LEVEL_5 = "token_level5";
+
+    // Allowlist of valid role values; decoded Base64 role cookies must match one of these.
+    private static final Set<String> ALLOWED_ROLES =
+            Collections.unmodifiableSet(new HashSet<>(Arrays.asList("ADMIN", "USER")));
 
     private static final String SQL_PROFILE_BY_ID =
             "SELECT id, username, salary, role FROM idor_users WHERE id=?";
@@ -204,7 +212,14 @@ public class IDORVulnerability {
             if (actualToken != null) {
                 User decodedUser = idorLoginService.decodeToken(actualToken);
                 int tokenUserId = decodedUser.getUserId();
-                String role = cookieRole != null ? decodeBase64(cookieRole) : decodedUser.getRole();
+                String decodedRole = cookieRole != null ? decodeBase64(cookieRole) : null;
+                // Validate the Base64-decoded role against an allowlist before trusting it in
+                // RBAC decisions; rejects attacker-crafted payloads (CVE-2026-114938 / CWE-502).
+                if (decodedRole != null
+                        && !ALLOWED_ROLES.contains(decodedRole.toUpperCase())) {
+                    return response(ACCESS_DENIED_INSUFFICIENT, false);
+                }
+                String role = decodedRole != null ? decodedRole : decodedUser.getRole();
 
                 if (id == null) {
                     id = tokenUserId;
