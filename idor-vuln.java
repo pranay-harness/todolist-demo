@@ -1,6 +1,5 @@
 package org.sasanlabs.service.vulnerability.idor;
 
-import java.util.Base64;
 import java.util.List;
 import org.sasanlabs.internal.utility.LevelConstants;
 import org.sasanlabs.internal.utility.Variant;
@@ -196,7 +195,6 @@ public class IDORVulnerability {
     @VulnerableAppRequestMapping(value = LevelConstants.LEVEL_4, htmlTemplate = "LEVEL_4/IDOR")
     public ResponseEntity<GenericVulnerabilityResponseBean<Object>> level4(
             @CookieValue(value = COOKIE_TOKEN_LEVEL_4, required = false) String cookieToken,
-            @CookieValue(value = COOKIE_ROLE_LEVEL_4, required = false) String cookieRole,
             @RequestParam(required = false) Integer id) {
 
         String actualToken = cookieToken;
@@ -204,7 +202,19 @@ public class IDORVulnerability {
             if (actualToken != null) {
                 User decodedUser = idorLoginService.decodeToken(actualToken);
                 int tokenUserId = decodedUser.getUserId();
-                String role = cookieRole != null ? decodeBase64(cookieRole) : decodedUser.getRole();
+
+                // Fetch role from the database; never trust role from client-supplied cookies
+                List<String> roles =
+                        jdbcTemplate.query(
+                                SQL_ROLE_BY_ID,
+                                new Object[] {tokenUserId},
+                                (rs, rowNum) -> rs.getString("role"));
+
+                if (roles.isEmpty()) {
+                    return response(INVALID_USER, false);
+                }
+
+                String role = roles.get(0);
 
                 if (id == null) {
                     id = tokenUserId;
@@ -302,14 +312,6 @@ public class IDORVulnerability {
                                 rs.getString("username"),
                                 rs.getInt("salary"),
                                 rs.getString("role")));
-    }
-
-    private String decodeBase64(String encodedId) {
-        try {
-            return new String(Base64.getUrlDecoder().decode(encodedId));
-        } catch (IllegalArgumentException e) {
-            return null;
-        }
     }
 
     private ResponseEntity<GenericVulnerabilityResponseBean<Object>> response(
