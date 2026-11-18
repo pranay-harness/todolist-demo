@@ -1,6 +1,7 @@
 package register;
 
 import db.ConnectionManager;
+import util.Usernames;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -66,7 +67,9 @@ public class Register extends HttpServlet {
 
 
 
-    if (password == null || password.isEmpty() || name == null || name.isEmpty() || !password.equals(password2)) {
+    // Same account-name rule the login servlet validates against, so an account can never
+    // be created with a name that would later be refused at login.
+    if (password == null || password.isEmpty() || !Usernames.isValid(name) || !password.equals(password2)) {
       response.sendRedirect(request.getContextPath() + "/wrongRegister.jsp");
     } else if (exists) {
       response.sendRedirect(request.getContextPath() + "/userExists.jsp");
