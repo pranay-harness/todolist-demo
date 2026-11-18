@@ -3,6 +3,7 @@ package login;
 import db.ConnectionManager;
 
 import java.io.IOException;
+import java.security.MessageDigest;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -28,6 +29,7 @@ public class RequestLogin extends HttpServlet {
     String password = request.getParameter("password");
     String remember = request.getParameter("remember");
     boolean success = false;
+    String authenticatedName = null;
     if (password == null || password.isEmpty() || name == null || name.isEmpty()) {
       response.sendRedirect(request.getContextPath() + "/loginFault.jsp");
     } else {
@@ -47,8 +49,9 @@ public class RequestLogin extends HttpServlet {
 
         while (resultSet.next()) {
           if (resultSet.getString(1).equals(name)) {
-            if (resultSet.getString(2).equals(password)) {
+            if (MessageDigest.isEqual(resultSet.getString(2).getBytes(), password.getBytes())) {
               success = true;
+              authenticatedName = resultSet.getString(1);
               break;
             }
           }
@@ -56,7 +59,7 @@ public class RequestLogin extends HttpServlet {
         resultSet.close();
         statement.close();
         if (success) {
-          request.getSession().setAttribute("name", name);
+          request.getSession().setAttribute("name", authenticatedName);
           if (remember == null) {
             request.getSession().setMaxInactiveInterval(1200);
           } else {
