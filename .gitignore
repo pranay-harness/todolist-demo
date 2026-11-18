@@ -1,0 +1,7 @@
+# Build and pipeline outputs
+target/
+reports/
+
+# OS / personal
+.DS_Store
+.devin/config.local.json

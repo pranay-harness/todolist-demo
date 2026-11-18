@@ -1,0 +1,160 @@
+# Regression pipeline: scripts/run-comprehensive-tests.sh plus breaking-change detection.
+#
+# Called by vuln-pr-validate.yml with base_ref, so the PR is judged on *new* failures
+# against its base, not on pre-existing ones. Also runs on demand and on push to main.
+name: Regression
+
+on:
+  workflow_call:
+    inputs:
+      base_ref:
+        description: Base commit to compare against (enables regression diff + breaking-change scan)
+        type: string
+        default: ""
+    outputs:
+      verdict:
+        description: pass | fail
+        value: ${{ jobs.compare.outputs.verdict }}
+  workflow_dispatch:
+    inputs:
+      base_ref:
+        description: Optional base ref/SHA to compare against (e.g. main)
+        type: string
+        default: ""
+  push:
+    branches: [main]
+    paths: ["pom.xml", "src/**", "scripts/**"]
+
+permissions:
+  contents: read
+
+jobs:
+  suite:
+    name: suite (${{ matrix.side }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        side: [head, base]
+    steps:
+      - name: Checkout ${{ matrix.side }}
+        if: matrix.side == 'head' || inputs.base_ref != ''
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.side == 'base' && inputs.base_ref || '' }}
+
+      # The pipeline scripts always come from the head revision.
+      - name: Checkout pipeline scripts
+        if: matrix.side == 'base' && inputs.base_ref != ''
+        uses: actions/checkout@v4
+        with:
+          path: .pipeline
+          sparse-checkout: scripts
+
+      - uses: actions/setup-java@v4
+        if: matrix.side == 'head' || inputs.base_ref != ''
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+
+      - name: Run regression suite
+        if: matrix.side == 'head' || inputs.base_ref != ''
+        run: |
+          tools=scripts/vuln; [ -d .pipeline ] && tools=.pipeline/scripts/vuln
+          "$tools/regression.sh"
+
+      - uses: actions/upload-artifact@v4
+        if: always() && (matrix.side == 'head' || inputs.base_ref != '')
+        with:
+          name: regression-${{ matrix.side }}
+          path: |
+            target/regression/
+            target/surefire-reports/
+            target/site/
+          if-no-files-found: ignore
+
+  breaking-changes:
+    if: inputs.base_ref != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+      - name: Detect breaking changes in upgraded dependencies
+        run: |
+          git show "${{ inputs.base_ref }}:pom.xml" > /tmp/base-pom.xml 2>/dev/null || : > /tmp/base-pom.xml
+          python3 scripts/vuln/vulnctl.py depdiff --base /tmp/base-pom.xml --head pom.xml > /tmp/changes.txt
+          mkdir -p target/breaking
+          {
+            echo "### 🧩 Breaking-change analysis (japicmp)"
+            echo ""
+            if [ ! -s /tmp/changes.txt ]; then
+              echo "No dependency version changes in pom.xml."
+            else
+              echo "| Dependency | From | To | Binary-incompatible changes |"
+              echo "|---|---|---|---|"
+            fi
+          } > target/breaking/summary.md
+          while read -r ga old new; do
+            echo "::group::$ga $old -> $new"
+            rm -f target/japicmp-report.xml target/japicmp-report.html
+            scripts/detect-breaking-changes.sh "$ga" "$old" "$new" || true
+            n=0
+            if [ -f target/japicmp-report.xml ]; then
+              n=$(grep -o 'binaryCompatible="false"' target/japicmp-report.xml | wc -l | tr -d ' ')
+              safe=${ga//:/_}
+              mv target/japicmp-report.xml "target/breaking/$safe.xml"
+              mv target/japicmp-report.html "target/breaking/$safe.html" 2>/dev/null || true
+            else
+              n="n/a"
+            fi
+            echo "::endgroup::"
+            flag=$([ "$n" = 0 ] && echo "✅ 0" || echo "⚠️ $n")
+            echo "| \`$ga\` | $old | $new | $flag |" >> target/breaking/summary.md
+          done < /tmp/changes.txt
+          cat target/breaking/summary.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: breaking-changes
+          path: target/breaking/
+
+  compare:
+    needs: [suite]
+    if: always()
+    runs-on: ubuntu-latest
+    outputs:
+      verdict: ${{ steps.diff.outputs.verdict }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: regression-*
+          path: results
+      - name: Compare against base
+        id: diff
+        run: |
+          base=results/regression-base/regression/results.json
+          args=(--head results/regression-head/regression/results.json --out regression.md)
+          [ -f "$base" ] && args+=(--base "$base")
+          if [ ! -f results/regression-head/regression/results.json ]; then
+            echo '{"failed":[],"reports":0,"build_ok":false}' > /tmp/empty.json
+            args=(--head /tmp/empty.json --out regression.md)
+          fi
+          if python3 scripts/vuln/vulnctl.py tests-diff "${args[@]}"; then v=pass; else v=fail; fi
+          echo "verdict=$v" >> "$GITHUB_OUTPUT"
+          cat regression.md >> "$GITHUB_STEP_SUMMARY"
+          [ "$v" = pass ]
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: regression-report
+          path: regression.md

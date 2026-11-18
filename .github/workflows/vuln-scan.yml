@@ -1,0 +1,145 @@
+# Vulnerability scan (Trivy + Semgrep) -> GitHub code scanning -> optional Devin remediation.
+#
+# Triggers
+#   - Actions tab "Run workflow" (on demand), with an option to hand findings to Devin
+#   - Weekly schedule; remediates automatically when repo variable DEVIN_AUTO_REMEDIATE=true
+#   - Push to main (scan only), keeps the Security tab current after merges
+#
+# Devin opens a PR on a devin/vuln-* branch, which triggers vuln-pr-validate.yml.
+# Setup: docs/VULN_PIPELINE.md
+name: Vuln Scan
+
+on:
+  workflow_dispatch:
+    inputs:
+      remediate:
+        description: Start a Devin session to triage and fix findings
+        type: boolean
+        default: false
+      min_severity:
+        description: Minimum severity that counts as actionable
+        type: choice
+        options: [CRITICAL, HIGH, MEDIUM, LOW]
+        default: HIGH
+      max_findings:
+        description: Max remediation items handed to Devin
+        type: number
+        default: 5
+  schedule:
+    - cron: "0 3 * * 1"
+  push:
+    branches: [main]
+    paths-ignore: ["**.md", "docs/**"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vuln-scan-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  MIN_SEVERITY: ${{ inputs.min_severity || 'HIGH' }}
+  MAX_FINDINGS: ${{ inputs.max_findings || 5 }}
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    outputs:
+      actionable: ${{ steps.summary.outputs.actionable }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Scan (Trivy + Semgrep)
+        run: scripts/vuln/scan.sh . reports/vuln
+
+      - name: Summarize
+        id: summary
+        run: |
+          cat reports/vuln/summary.md >> "$GITHUB_STEP_SUMMARY"
+          python3 -c 'import json;s=json.load(open("reports/vuln/findings.json"))["stats"];print(f"actionable={s[\"actionable_items\"]}")' >> "$GITHUB_OUTPUT"
+
+      - name: Upload Trivy SARIF
+        if: always() && hashFiles('reports/vuln/trivy.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: reports/vuln/trivy.sarif
+          category: trivy
+
+      - name: Upload Semgrep SARIF
+        if: always() && hashFiles('reports/vuln/semgrep.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: reports/vuln/semgrep.sarif
+          category: semgrep
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: vuln-report
+          path: reports/vuln/
+          retention-days: 30
+
+  remediate:
+    needs: scan
+    if: >-
+      needs.scan.outputs.actionable != '0' &&
+      (inputs.remediate || (github.event_name == 'schedule' && vars.DEVIN_AUTO_REMEDIATE == 'true'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    env:
+      DEVIN_API_KEY: ${{ secrets.DEVIN_API_KEY }}
+      DEVIN_ORG_ID: ${{ secrets.DEVIN_ORG_ID }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: vuln-report
+          path: reports/vuln
+
+      - name: Skip if a Devin remediation PR is already open
+        id: guard
+        run: |
+          open=$(gh pr list --state open --json headRefName --jq '[.[] | select(.headRefName | startswith("devin/vuln-"))] | length')
+          echo "open=$open" >> "$GITHUB_OUTPUT"
+          if [ "$open" != "0" ]; then
+            echo "::notice::$open devin/vuln-* PR(s) already open; not starting another session."
+          fi
+          if [ -z "$DEVIN_API_KEY" ] || [ -z "$DEVIN_ORG_ID" ]; then
+            echo "::warning::DEVIN_API_KEY / DEVIN_ORG_ID secrets not set; see docs/VULN_PIPELINE.md"
+            echo "open=no-secrets" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Start Devin session
+        if: steps.guard.outputs.open == '0'
+        run: |
+          python3 scripts/vuln/vulnctl.py devin-body \
+            --prompt .devin/prompts/remediate.md \
+            --findings reports/vuln/remediation.md \
+            --repo "${{ github.repository }}" \
+            --run-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            --max-acu "${{ vars.DEVIN_MAX_ACU || 10 }}" \
+            --playbook-id "${{ vars.DEVIN_PLAYBOOK_ID }}" > body.json
+          curl -sS --fail-with-body -X POST \
+            "https://api.devin.ai/v3/organizations/${DEVIN_ORG_ID}/sessions" \
+            -H "Authorization: Bearer ${DEVIN_API_KEY}" \
+            -H "Content-Type: application/json" \
+            --data @body.json -o session.json
+          url=$(python3 -c 'import json;print(json.load(open("session.json"))["url"])')
+          echo "::notice title=Devin session started::$url"
+          {
+            echo "## 🤖 Devin remediation session"
+            echo ""
+            echo "$url"
+            echo ""
+            echo "Devin will triage these items, open a \`devin/vuln-*\` PR, and **Vuln PR Validate** will rescan and run regression on it."
+            echo ""
+            cat reports/vuln/remediation.md
+          } >> "$GITHUB_STEP_SUMMARY"
