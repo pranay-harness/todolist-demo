@@ -1,6 +1,7 @@
 package register;
 
 import db.ConnectionManager;
+import util.SafeRedirect;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -67,9 +68,9 @@ public class Register extends HttpServlet {
 
 
     if (password == null || password.isEmpty() || name == null || name.isEmpty() || !password.equals(password2)) {
-      response.sendRedirect(request.getContextPath() + "/wrongRegister.jsp");
+      response.sendRedirect(SafeRedirect.getSafeUrl(request.getContextPath() + "/wrongRegister.jsp", "/"));
     } else if (exists) {
-      response.sendRedirect(request.getContextPath() + "/userExists.jsp");
+      response.sendRedirect(SafeRedirect.getSafeUrl(request.getContextPath() + "/userExists.jsp", "/"));
     } else {
       try {
         Connection connection = ConnectionManager.getConnection();
@@ -87,7 +88,7 @@ public class Register extends HttpServlet {
         System.err.println("ERROR: failed to load HSQLDB JDBC driver.FUCK!");
         e.printStackTrace(System.out);
       }
-      response.sendRedirect(request.getContextPath() + "/login.jsp");
+      response.sendRedirect(SafeRedirect.getSafeUrl(request.getContextPath() + "/login.jsp", "/"));
     }
   }
 }

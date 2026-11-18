@@ -1,8 +1,11 @@
 package inside;
 
 import db.ConnectionManager;
+import util.SafeRedirect;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -32,9 +35,15 @@ public class Edit extends HttpServlet {
     String task = request.getParameter("task");
     if (task == null || priority == null || task.isEmpty() || priority.isEmpty()) {
       //			System.out.println("nimei!");
-      String link = "/inside/showEditTask.jsp?date=" + date;
+      String encodedDate;
+      try {
+        encodedDate = URLEncoder.encode(date != null ? date : "", "UTF-8");
+      } catch (UnsupportedEncodingException e) {
+        encodedDate = "";
+      }
+      String link = "/inside/showEditTask.jsp?date=" + encodedDate;
       //			System.out.println("the link is " + link);
-      response.sendRedirect(link);
+      response.sendRedirect(SafeRedirect.getSafeUrl(link, "/inside/display"));
     } else {
       //			System.out.println("gan!");
 
