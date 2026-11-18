@@ -1,6 +1,7 @@
 package inside;
 
 import db.ConnectionManager;
+import util.RedirectUtil;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -32,9 +33,10 @@ public class Edit extends HttpServlet {
     String task = request.getParameter("task");
     if (task == null || priority == null || task.isEmpty() || priority.isEmpty()) {
       //			System.out.println("nimei!");
-      String link = "/inside/showEditTask.jsp?date=" + date;
+      // URL-encode the user-supplied date value to prevent CRLF injection; the base path is constant.
+      String link = "/inside/showEditTask.jsp?date=" + RedirectUtil.encodeParam(date);
       //			System.out.println("the link is " + link);
-      response.sendRedirect(link);
+      RedirectUtil.safeRedirect(request, response, link);
     } else {
       //			System.out.println("gan!");
 
