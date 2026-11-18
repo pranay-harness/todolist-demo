@@ -1,8 +1,11 @@
 package inside;
 
 import db.ConnectionManager;
+import validation.RequestParameters;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -19,6 +22,29 @@ import javax.servlet.http.HttpSession;
 public class Edit extends HttpServlet {
   private static final long serialVersionUID = 1L;
 
+  /** Only in-application destination this servlet may redirect back to for editing. */
+  private static final String EDIT_TASK_PATH = "/inside/showEditTask.jsp";
+
+  /** Safe in-application fallback used whenever the requested target is not allowed. */
+  private static final String DEFAULT_REDIRECT_PATH = "/inside/display";
+
+  /**
+   * Builds the redirect target for the edit form. The path is always a compile-time constant
+   * in-application path, and the untrusted date value is only appended when it matches the
+   * expected createDate shape and after URL encoding. Absolute URLs, protocol-relative
+   * targets, backslash tricks and encoded variants can therefore never reach sendRedirect.
+   */
+  private static String buildEditTaskRedirect(String dateParam) {
+    if (!RequestParameters.isValidDate(dateParam)) {
+      return DEFAULT_REDIRECT_PATH;
+    }
+    try {
+      return EDIT_TASK_PATH + "?date=" + URLEncoder.encode(dateParam, "UTF-8");
+    } catch (UnsupportedEncodingException e) {
+      return DEFAULT_REDIRECT_PATH;
+    }
+  }
+
   /**
    * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
    */
@@ -30,9 +56,13 @@ public class Edit extends HttpServlet {
     //		System.out.println("the name is " + date);
     String priority = request.getParameter("priority");
     String task = request.getParameter("task");
-    if (task == null || priority == null || task.isEmpty() || priority.isEmpty()) {
+    // Validate every untrusted parameter before it is used; invalid input falls back to the edit
+    // form exactly as a missing task or priority already did.
+    if (!RequestParameters.isValidTask(task)
+        || !RequestParameters.isValidPriority(priority)
+        || !RequestParameters.isValidDate(date)) {
       //			System.out.println("nimei!");
-      String link = "/inside/showEditTask.jsp?date=" + date;
+      String link = buildEditTaskRedirect(date);
       //			System.out.println("the link is " + link);
       response.sendRedirect(link);
     } else {

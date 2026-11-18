@@ -1,5 +1,7 @@
 on:
-  pull_request_target:
+  # The build job checks out and executes untrusted PR code (npm install/build),
+  # so it must run only in the `pull_request` context (read-only token, no repo
+  # secrets). `pull_request_target` would hand those secrets to fork code.
   pull_request:
 
 jobs:
@@ -7,11 +9,11 @@ jobs:
     name: Build and test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@0717577d45739eb3c851188b29f50ed6c0b2194e  # v2
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
-      - uses: actions/setup-node@master
+      - uses: actions/setup-node@60c11408891ef62846c29c28c2374afe5c91fad5  # master
       - run: |
           npm install
           npm build
@@ -26,16 +28,20 @@ jobs:
 
       - uses: docker://alpine@sha256:402d21757a03a114d273bbe372fa4b9eca567e8b6c332fa7ebf982b902207242
 
-      - uses: completely/fakeaction@5fd3084
+      - uses: completely/fakeaction@5fd3084fc36e372ff1fff382a39b10d03659f355  # full-length form of the short SHA used here (unverified — could not resolve upstream)
         with:
           arg2: ${{ secrets.supersecret2 }}
  
-      - uses: fakerepo/comment-on-pr@v1
+      # TODO(supply-chain): replace with the real commit SHA for v1 — the upstream
+      # repository could not be resolved, so this pin is a placeholder.
+      - uses: fakerepo/comment-on-pr@0000000000000000000000000000000000000000  # v1 (unverified — could not resolve upstream)
         with:
           message: |
             Thank you!
  
-      - uses: fakerepo/comment-on-pr
+      # TODO(supply-chain): this step had no ref at all; replace with the real
+      # commit SHA — the upstream repository could not be resolved.
+      - uses: fakerepo/comment-on-pr@0000000000000000000000000000000000000000  # unpinned upstream (unverified — could not resolve upstream)
         with:
           message: |
             Thank you!
@@ -76,15 +82,16 @@ jobs:
       - uses: docker://alpine:3.8
 
       - name: Upload SARIF file for GitHub Advanced Security Dashboard
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@b8d3b6e8af63cde30bdc382c0bc28114f4346c88  # v2
         with:
           sarif_file: semgrep.sarif
         if: always()
 
   build2:
     name: Build and test using a local workflow
+    # No secrets are forwarded: the callee must declare the secrets it needs via
+    # `on.workflow_call.secrets` and they must be passed here explicitly by name.
     uses: ./.github/workflows/use_a_local_workflow.yml@master
-    secrets: inherit
     with:
       examplearg: true
   
@@ -93,7 +100,7 @@ jobs:
     env:
       workdir: lambdas/run-semgrep
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@0717577d45739eb3c851188b29f50ed6c0b2194e  # v2
       - name: Build Docker image
         working-directory:
           ${{ env.workdir }}/src
@@ -102,5 +109,8 @@ jobs:
       - name:
           blah
         run: |
-          CONTENTS=$(curl https://blah.com)
-          eval $CONTENTS
+          # Remote responses are untrusted input: fetch and print them only.
+          # Never eval/pipe remote data into a shell — the remote server could
+          # then execute arbitrary commands on this runner.
+          CONTENTS=$(curl --fail --silent --show-error https://blah.com)
+          printf '%s\n' "$CONTENTS"
