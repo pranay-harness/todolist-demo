@@ -25,9 +25,8 @@ public class Register extends HttpServlet {
     try {
       Connection connection = ConnectionManager.getConnection();
       Statement statement = connection.createStatement();
-      statement.executeUpdate("create table accounts (name varchar(32)," + " password varchar(32))");
-      statement
-          .executeUpdate("create table task (name varchar(32)," + " thing varchar(60), priority integer, createDate varchar(80),primary key (createDate))");
+      statement.executeUpdate("create table accounts (name varchar(32), password varchar(32))");
+      statement.executeUpdate("create table task (name varchar(32), thing varchar(60), priority integer, createDate varchar(80),primary key (createDate))");
       statement.close();
     } catch (SQLException e) {
       e.printStackTrace(System.out);
@@ -40,20 +39,25 @@ public class Register extends HttpServlet {
     String name = request.getParameter("name");
     String password = request.getParameter("password");
     String password2 = request.getParameter("password2");
-    boolean exists = false;
 
+    if (name == null || name.isEmpty() || password == null || password.isEmpty() || !password.equals(password2)) {
+      response.sendRedirect(request.getContextPath() + "/wrongRegister.jsp");
+      return;
+    }
+
+    boolean exists = false;
 
     try {
       Connection connection = ConnectionManager.getConnection();
 
-      Statement statement = connection.createStatement();
+      PreparedStatement statement = connection.prepareStatement(
+          "select name from accounts where name = ?");
+      statement.setString(1, name);
 
+      ResultSet resultSet = statement.executeQuery();
 
-      ResultSet resultSet = statement.executeQuery("select name from accounts");
-
-      while (resultSet.next()) {
-        if (resultSet.getString(1).equals(name))
-          exists = true;
+      if (resultSet.next()) {
+        exists = true;
       }
       resultSet.close();
       statement.close();
@@ -64,11 +68,7 @@ public class Register extends HttpServlet {
       e.printStackTrace(System.out);
     }
 
-
-
-    if (password == null || password.isEmpty() || name == null || name.isEmpty() || !password.equals(password2)) {
-      response.sendRedirect(request.getContextPath() + "/wrongRegister.jsp");
-    } else if (exists) {
+    if (exists) {
       response.sendRedirect(request.getContextPath() + "/userExists.jsp");
     } else {
       try {
