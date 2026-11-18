@@ -1,6 +1,6 @@
 # Build stage: compile the WAR inside the image so the build never depends on
 # a target/ folder produced by an earlier pipeline step.
-FROM maven:3.9-eclipse-temurin-8 AS build
+FROM maven:3.10-eclipse-temurin-8 AS build
 WORKDIR /app
 
 # No dependency:go-offline step: it resolves every transitive descriptor,
