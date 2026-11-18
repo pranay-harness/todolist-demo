@@ -257,10 +257,16 @@ public class IDORVulnerability {
 
                 String actualRole = roles.get(0);
 
-                if (ROLE_ADMIN.equalsIgnoreCase(actualRole) || tokenUserId == id) {
+                if (ROLE_ADMIN.equalsIgnoreCase(actualRole) || id.equals(tokenUserId)) {
                     User profile = fetchUserById(id);
                     if (profile == null) {
                         return response(USER_NOT_FOUND, false, HttpStatus.NOT_FOUND);
+                    }
+                    // Authorization check: verify the fetched resource belongs to the authenticated
+                    // user (defense-in-depth against IDOR via unvalidated direct object reference)
+                    if (!ROLE_ADMIN.equalsIgnoreCase(actualRole)
+                            && profile.getUserId() != tokenUserId) {
+                        return response(ACCESS_DENIED_RBAC, false, HttpStatus.FORBIDDEN);
                     }
                     profile.setRole(actualRole);
                     return response(profile, true, HttpStatus.OK);
